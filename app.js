@@ -47,13 +47,22 @@ function displayProducts(data) {
 }
 
 function searchProducts() {
-  const term = document.getElementById("search").value.toLowerCase();
-  const filtered = products.filter(p =>
-    (p.Barcode || p.barcode || '').toLowerCase().includes(term) ||
-    (p["Nama Produk"] || p.productName || '').toLowerCase().includes(term)
-  );
+  const input = document.getElementById("search").value.trim().toLowerCase();
+
+  if (!input) {
+    displayProducts(products); // Tampilkan semua jika input kosong
+    return;
+  }
+
+  const filtered = products.filter(p => {
+    const barcode = String(p.Barcode || p.barcode || "").toLowerCase();
+    const name = String(p["Nama Produk"] || p.productName || "").toLowerCase();
+    return barcode.includes(input) || name.includes(input);
+  });
+
   displayProducts(filtered);
 }
+
 
 async function saveProduct() {
   const barcode = document.getElementById("barcode").value.trim();
