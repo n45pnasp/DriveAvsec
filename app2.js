@@ -65,6 +65,7 @@ function renderCart() {
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
 
+  // Tombol tambah produk ke keranjang
   document.getElementById("productList").addEventListener("click", e => {
     if (e.target.classList.contains("btn-add")) {
       const barcode = decodeURIComponent(e.target.dataset.barcode);
@@ -82,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Tombol kurang dari keranjang
   document.getElementById("cartList").addEventListener("click", e => {
     if (e.target.classList.contains("btn-minus")) {
       const index = parseInt(e.target.dataset.index);
@@ -94,5 +96,34 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCart();
       }
     }
+  });
+
+  // Tombol cetak struk
+  document.getElementById("btn-print").addEventListener("click", () => {
+    if (cart.length === 0) {
+      alert("Keranjang kosong, tidak bisa mencetak struk.");
+      return;
+    }
+
+    let strukWindow = window.open('', '_blank');
+    strukWindow.document.write('<html><head><title>Struk Belanja</title>');
+    strukWindow.document.write('<style>body{font-family:sans-serif;padding:20px;} h2{margin-bottom:10px;} table{width:100%;border-collapse:collapse;} th,td{padding:8px;border:1px solid #ccc;} th{text-align:left;background:#f0f0f0;} .total{text-align:right;margin-top:20px;font-weight:bold;}</style>');
+    strukWindow.document.write('</head><body>');
+    strukWindow.document.write('<h2>Struk Belanja</h2>');
+    strukWindow.document.write('<table>');
+    strukWindow.document.write('<tr><th>Produk</th><th>Qty</th><th>Subtotal</th></tr>');
+
+    let total = 0;
+    cart.forEach(item => {
+      const subtotal = item.qty * item.price;
+      total += subtotal;
+      strukWindow.document.write(`<tr><td>${item.name}</td><td>${item.qty}</td><td>Rp ${subtotal.toLocaleString()}</td></tr>`);
+    });
+
+    strukWindow.document.write('</table>');
+    strukWindow.document.write(`<div class="total">Total: Rp ${total.toLocaleString()}</div>`);
+    strukWindow.document.write('</body></html>');
+    strukWindow.document.close();
+    strukWindow.print();
   });
 });
