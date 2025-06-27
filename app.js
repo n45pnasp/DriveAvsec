@@ -1,3 +1,4 @@
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzA8xFUkQKccXmMbpc8KMfUyyloD8zUbo4WIIjkO8-MLMTs-I1wPIqYEupfUkm9oXH/exec';
 let products = [];
 let isScannerActive = false;
@@ -31,16 +32,15 @@ function displayProducts(data) {
     return;
   }
   data.forEach(p => {
-    const barcode = p.Barcode || p.barcode;
     list.innerHTML += `
       <tr>
-        <td>${barcode}</td>
+        <td>${p.Barcode || p.barcode}</td>
         <td>${p["Nama Produk"] || p.productName}</td>
         <td>${p.Jumlah || p.quantity}</td>
         <td>Rp ${Number(p.Harga || p.price).toLocaleString()}</td>
         <td>
-          <button class="btn btn-small btn-secondary" onclick="editProduct('${barcode}')">Edit</button>
-          <button class="btn btn-small btn-danger" onclick="deleteProduct('${barcode}')">Hapus</button>
+          <button class="btn btn-small btn-secondary" onclick="editProduct('${encodeURIComponent(p.Barcode || p.barcode)}')">Edit</button>
+          <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.Barcode || p.barcode}')">Hapus</button>
         </td>
       </tr>`;
   });
@@ -101,7 +101,8 @@ function resetForm() {
 }
 
 function editProduct(barcode) {
-  const p = products.find(p => (p.Barcode || p.barcode) === barcode);
+  const decoded = decodeURIComponent(barcode.trim());
+  const p = products.find(p => String(p.Barcode || p.barcode).trim() === decoded);
   if (p) {
     document.getElementById("barcode").value = p.Barcode || p.barcode;
     document.getElementById("barcode").readOnly = true;
