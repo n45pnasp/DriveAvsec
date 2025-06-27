@@ -1,4 +1,4 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzer87iN1PfL8GMx_jlm0Ix-u3PSbc_7sk3G2m0BKAiprNKG1lMjHKtzo1YB0H-qQKO/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpQgfYQjRfrSYe5BkaIVR-ouoXPpglErMIaxiVqNaQmXOiUjQJMcSDpk9zfn3YtWe6/exec';
 let products = [];
 let isScannerActive = false;
 
