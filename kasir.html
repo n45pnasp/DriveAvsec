@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kasir Produk</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style2.css" />
 </head>
 <body>
   <header>
@@ -26,72 +26,6 @@
     </div>
   </main>
 
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzA8xFUkQKccXmMbpc8KMfUyyloD8zUbo4WIIjkO8-MLMTs-I1wPIqYEupfUkm9oXH/exec';
-    let allProducts = [];
-    let cart = [];
-
-    async function fetchProducts() {
-      try {
-        const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-        const data = await res.json();
-        allProducts = data;
-        renderProductList();
-      } catch (err) {
-        alert("Gagal memuat data");
-      }
-    }
-
-    function renderProductList() {
-      const container = document.getElementById('productListKasir');
-      container.innerHTML = "<ul>";
-      allProducts.forEach(p => {
-        container.innerHTML += `
-          <li style="margin-bottom:10px">
-            <strong>${p["Nama Produk"] || p.productName}</strong><br/>
-            Rp ${Number(p.Harga || p.price).toLocaleString()}
-            <button class="btn btn-primary btn-small" onclick="addToCart('${p.Barcode || p.barcode}')">Tambah</button>
-          </li>
-        `;
-      });
-      container.innerHTML += "</ul>";
-    }
-
-    function addToCart(barcode) {
-      const item = allProducts.find(p => (p.Barcode || p.barcode) === barcode);
-      if (item) {
-        const found = cart.find(p => p.barcode === barcode);
-        if (found) {
-          found.qty++;
-        } else {
-          cart.push({ barcode, name: item["Nama Produk"] || item.productName, price: Number(item.Harga || item.price), qty: 1 });
-        }
-        renderCart();
-      }
-    }
-
-    function renderCart() {
-      const cartList = document.getElementById('cartList');
-      const totalDisplay = document.getElementById('totalPrice');
-      cartList.innerHTML = "";
-      let total = 0;
-      cart.forEach((item, i) => {
-        total += item.qty * item.price;
-        cartList.innerHTML += `
-          <li>
-            ${item.name} - ${item.qty} x Rp ${item.price.toLocaleString()} 
-            <button class="btn btn-danger btn-small" onclick="removeFromCart(${i})">Hapus</button>
-          </li>`;
-      });
-      totalDisplay.textContent = `Rp ${total.toLocaleString()}`;
-    }
-
-    function removeFromCart(index) {
-      cart.splice(index, 1);
-      renderCart();
-    }
-
-    document.addEventListener("DOMContentLoaded", fetchProducts);
-  </script>
+  <script src="app2.js"></script>
 </body>
 </html>
