@@ -1,42 +1,74 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzA8xFUkQKccXmMbpc8KMfUyyloD8zUbo4WIIjkO8-MLMTs-I1wPIqYEupfUkm9oXH/exec';
+
 let allProducts = [];
 let cart = [];
 
-async function fetchProducts() {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+    const res = await fetch(SCRIPT_URL);
     const data = await res.json();
-    allProducts = data;
-    renderProductList();
+    if (Array.isArray(data)) {
+      allProducts = data;
+      renderProductList();
+    }
   } catch (err) {
-    alert("Gagal memuat data");
+    console.error("Gagal memuat data produk:", err);
   }
-}
+});
 
 function renderProductList() {
   const container = document.getElementById('productListKasir');
   container.innerHTML = "";
+
   allProducts.forEach(p => {
     const name = p["Nama Produk"] || p.productName;
     const price = Number(p.Harga || p.price);
     const barcode = p.Barcode || p.barcode;
-    const itemHTML = `
-      <li>
-        <strong>${name}</strong><br/>
-        Rp ${price.toLocaleString()}
-        <button class="btn btn-primary" onclick="showQtyInput('${barcode}')">Tambah</button>
-        <span id="qtyInput-${barcode}" style="display:none;">
-          <input class="qty-input" type="number" min="1" value="1" id="qty-${barcode}" />
-          <button class="btn btn-primary btn-sm" onclick="addToCart('${barcode}')">OK</button>
-        </span>
-      </li>`;
-    container.innerHTML += itemHTML;
-  });
-}
 
-function showQtyInput(barcode) {
-  document.querySelectorAll("span[id^='qtyInput-']").forEach(el => el.style.display = "none");
-  document.getElementById(`qtyInput-${barcode}`).style.display = "inline";
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <strong>${name}</strong><br/>
+      Rp ${price.toLocaleString()}
+    `;
+
+    const btnTambah = document.createElement("button");
+    btnTambah.textContent = "Tambah";
+    btnTambah.className = "btn btn-primary";
+    btnTambah.style.marginLeft = "10px";
+
+    const qtyContainer = document.createElement("span");
+    qtyContainer.id = `qtyInput-${barcode}`;
+    qtyContainer.style.display = "none";
+    qtyContainer.style.marginLeft = "10px";
+
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.min = 1;
+    qtyInput.value = 1;
+    qtyInput.className = "qty-input";
+    qtyInput.id = `qty-${barcode}`;
+
+    const btnOK = document.createElement("button");
+    btnOK.textContent = "OK";
+    btnOK.className = "btn btn-sm btn-success";
+    btnOK.style.marginLeft = "5px";
+
+    btnTambah.addEventListener("click", () => {
+      qtyContainer.style.display = "inline-block";
+    });
+
+    btnOK.addEventListener("click", () => {
+      addToCart(barcode);
+      qtyContainer.style.display = "none";
+    });
+
+    qtyContainer.appendChild(qtyInput);
+    qtyContainer.appendChild(btnOK);
+    li.appendChild(btnTambah);
+    li.appendChild(qtyContainer);
+
+    container.appendChild(li);
+  });
 }
 
 function addToCart(barcode) {
@@ -55,28 +87,25 @@ function addToCart(barcode) {
   }
 
   renderCart();
-  document.getElementById(`qtyInput-${barcode}`).style.display = "none";
 }
 
 function renderCart() {
-  const cartList = document.getElementById('cartList');
-  const totalDisplay = document.getElementById('totalPrice');
-  cartList.innerHTML = "";
+  const container = document.getElementById('cartItems');
+  const totalDisplay = document.getElementById('totalHarga');
+  container.innerHTML = "";
+
   let total = 0;
-  cart.forEach((item, i) => {
-    const subtotal = item.qty * item.price;
+
+  cart.forEach(item => {
+    const subtotal = item.price * item.qty;
     total += subtotal;
-    cartList.innerHTML += `
-      <li>${item.name} - ${item.qty} x Rp ${item.price.toLocaleString()} 
-      = <strong>Rp ${subtotal.toLocaleString()}</strong>
-      <button class="btn btn-danger btn-sm" onclick="removeFromCart(${i})">Hapus</button></li>`;
+
+    const row = document.createElement("div");
+    row.innerHTML = `
+      ${item.name} x ${item.qty} = Rp ${subtotal.toLocaleString()}
+    `;
+    container.appendChild(row);
   });
+
   totalDisplay.textContent = `Rp ${total.toLocaleString()}`;
 }
-
-function removeFromCart(index) {
-  cart.splice(index, 1);
-  renderCart();
-}
-
-document.addEventListener("DOMContentLoaded", fetchProducts);
