@@ -1,3 +1,4 @@
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtuiLjAtRt7WIIAbRBfpIuGLggBWRbGHC_dUcywE1HduxPg7Bo17pjzlkcvegDvAd6/exec';
 let products = [];
 let isScannerActive = false;
@@ -59,7 +60,6 @@ async function saveProduct() {
   const productName = document.getElementById("productName").value.trim();
   const quantity = document.getElementById("quantity").value.trim();
   const price = document.getElementById("price").value.trim();
-  const original = document.getElementById("originalBarcode").value.trim();
 
   if (!barcode || !productName || !price) {
     showStatus("Semua field harus diisi!", false);
@@ -71,7 +71,6 @@ async function saveProduct() {
   formData.append("productName", productName);
   formData.append("quantity", quantity);
   formData.append("price", price);
-  formData.append("originalBarcode", original);
 
   try {
     document.getElementById("saveBtn").disabled = true;
@@ -95,20 +94,20 @@ async function saveProduct() {
 
 function resetForm() {
   document.getElementById("barcode").value = "";
+  document.getElementById("barcode").readOnly = false;
   document.getElementById("productName").value = "";
   document.getElementById("quantity").value = "1";
   document.getElementById("price").value = "";
-  document.getElementById("originalBarcode").value = "";
 }
 
 function editProduct(barcode) {
   const p = products.find(p => (p.Barcode || p.barcode) === barcode);
   if (p) {
     document.getElementById("barcode").value = p.Barcode || p.barcode;
+    document.getElementById("barcode").readOnly = true;
     document.getElementById("productName").value = p["Nama Produk"] || p.productName;
     document.getElementById("quantity").value = p.Jumlah || p.quantity;
     document.getElementById("price").value = p.Harga || p.price;
-    document.getElementById("originalBarcode").value = barcode;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
