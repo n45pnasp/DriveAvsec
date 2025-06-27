@@ -6,6 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alat Cek Produk</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f2f2f2; }
+    .container { padding: 20px; }
+    .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { font-weight: bold; margin-bottom: 5px; display: block; }
+    .btn { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: #007bff; color: #fff; }
+    .btn-secondary { background: #6c757d; color: #fff; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-small { padding: 5px 10px; font-size: 12px; margin-right: 5px; }
+    .input-with-button { display: flex; gap: 10px; align-items: center; }
+    .loading { display: none; }
+    #statusMessage { padding: 10px; margin-bottom: 15px; border-radius: 4px; display: none; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    th { background-color: #f0f0f0; }
+  </style>
 </head>
 <body>
   <header>
@@ -17,7 +37,6 @@
   <main class="container">
     <div class="card">
       <div id="statusMessage"></div>
-
       <div class="form-group">
         <label for="barcode">Barcode:</label>
         <div class="input-with-button">
@@ -27,24 +46,19 @@
         <div id="scanner-container" style="display:none; width:100%; max-width:400px; margin-top:10px;">
           <div id="interactive" class="viewport"></div>
         </div>
-        <input type="hidden" id="originalBarcode" />
       </div>
-
       <div class="form-group">
         <label for="productName">Nama Produk:</label>
         <input type="text" id="productName" />
       </div>
-
       <div class="form-group">
         <label for="quantity">Jumlah:</label>
         <input type="number" id="quantity" value="1" min="1" />
       </div>
-
       <div class="form-group">
         <label for="price">Harga (Rp):</label>
         <input type="number" id="price" />
       </div>
-
       <button id="saveBtn" class="btn btn-primary">Simpan Produk</button>
       <span id="saveSpinner" class="loading">⏳</span>
     </div>
