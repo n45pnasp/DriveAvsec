@@ -70,9 +70,10 @@
     </div>
   </main>
 
-  <!-- Load library Html5Qrcode (PASTIKAN INI SEBELUM JAVASCRIPT UTAMA) -->
+  <!-- LIBRARY SCANNER -->
   <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
 
+  <!-- SCRIPT UTAMA -->
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzer87iN1PfL8GMx_jlm0Ix-u3PSbc_7sk3G2m0BKAiprNKG1lMjHKtzo1YB0H-qQKO/exec';
     let products = [];
@@ -84,7 +85,7 @@
       status.textContent = msg;
       status.className = isSuccess ? "status-message success" : "status-message error";
       status.style.display = "block";
-      setTimeout(() => (status.style.display = "none"), 3000);
+      setTimeout(() => status.style.display = "none", 3000);
     }
 
     async function loadProducts() {
@@ -207,7 +208,7 @@
     async function toggleScanner() {
       const reader = document.getElementById("qr-reader");
 
-      if (isScannerActive) {
+      if (isScannerActive && qrScanner) {
         await qrScanner.stop();
         qrScanner.clear();
         reader.style.display = "none";
@@ -224,11 +225,11 @@
           },
           (decodedText) => {
             document.getElementById("barcode").value = decodedText;
-            toggleScanner(); // stop scanner & hide UI
-            showStatus("Barcode berhasil dibaca!", true);
+            toggleScanner(); // stop scanner
+            showStatus("Barcode berhasil dibaca", true);
           },
           (errorMsg) => {
-            // Optional: log errorMsg
+            // Bisa diabaikan untuk error scan
           }
         ).then(() => {
           isScannerActive = true;
