@@ -2,6 +2,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzA8xFUkQKccXmMbpc8
 let products = [];
 let cart = [];
 
+// Load data produk dari Google Sheets
 async function loadProducts() {
   try {
     const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
@@ -17,6 +18,7 @@ async function loadProducts() {
   }
 }
 
+// Tampilkan daftar produk
 function displayProducts() {
   const list = document.getElementById("productList");
   list.innerHTML = "";
@@ -38,6 +40,7 @@ function displayProducts() {
   });
 }
 
+// Render isi keranjang
 function renderCart() {
   const list = document.getElementById("cartList");
   const totalEl = document.getElementById("cartTotal");
@@ -47,7 +50,6 @@ function renderCart() {
 
   cart.forEach((item, index) => {
     total += item.qty * item.price;
-
     const li = document.createElement("li");
     li.className = "cart-item";
     li.innerHTML = `
@@ -62,6 +64,68 @@ function renderCart() {
   totalEl.textContent = `Total: Rp ${total.toLocaleString()}`;
 }
 
+// Cetak struk PDF
+async function loadImageAsBase64(url) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
+async function printReceipt() {
+  if (cart.length === 0) {
+    alert("Keranjang kosong");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const logo = await loadImageAsBase64("logo.png"); // Ganti sesuai path logo kamu
+  let y = 10;
+
+  if (logo) {
+    doc.addImage(logo, 'PNG', 80, y, 50, 20);
+    y += 25;
+  }
+
+  doc.setFontSize(14);
+  doc.text("Toko Drive Avsec", 105, y, { align: "center" });
+  y += 10;
+
+  doc.setFontSize(12);
+  doc.text(`Tanggal: ${new Date().toLocaleString()}`, 14, y);
+  y += 8;
+
+  doc.autoTable({
+    startY: y,
+    head: [['Produk', 'Qty', 'Harga', 'Total']],
+    body: cart.map(item => [
+      item.name,
+      item.qty,
+      `Rp ${item.price.toLocaleString()}`,
+      `Rp ${(item.qty * item.price).toLocaleString()}`
+    ]),
+    theme: 'grid',
+    headStyles: { fillColor: [0, 123, 255] },
+    styles: { fontSize: 10 }
+  });
+
+  const total = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+  doc.text(`Total: Rp ${total.toLocaleString()}`, 14, doc.lastAutoTable.finalY + 10);
+
+  doc.save("struk-belanja.pdf");
+}
+
+// Event listener
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
 
@@ -96,67 +160,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.getElementById("btn-print-pdf").addEventListener("click", async () => {
-    if (cart.length === 0) {
-      alert("Keranjang kosong, tidak bisa mencetak.");
-      return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const logoImg = await loadImageAsBase64('logo.png');
-
-    // HEADER
-    if (logoImg) {
-      doc.addImage(logoImg, 'PNG', 15, 10, 25, 25);
-    }
-    doc.setFontSize(16);
-    doc.text("TOKO AVSEC MAJU", 45, 15);
-    doc.setFontSize(10);
-    doc.text("Jl. Terminal Airport No. 99\nJakarta - Indonesia", 45, 21);
-    doc.text(`Tanggal: ${new Date().toLocaleString()}`, 45, 30);
-
-    // TABEL
-    const rows = cart.map(item => [
-      item.name,
-      item.qty,
-      `Rp ${Number(item.price).toLocaleString()}`,
-      `Rp ${(item.qty * item.price).toLocaleString()}`
-    ]);
-    const total = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
-
-    doc.autoTable({
-      startY: 40,
-      head: [["Produk", "Qty", "Harga", "Subtotal"]],
-      body: rows,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [0, 123, 255] }
-    });
-
-    doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
-    doc.text(`Total: Rp ${total.toLocaleString()}`, 145, doc.lastAutoTable.finalY + 10, { align: "right" });
-
-    doc.setFontSize(10);
-    doc.setFont(undefined, "normal");
-    doc.text("Terima kasih telah berbelanja di Toko Avsec Maju!", 14, doc.lastAutoTable.finalY + 20);
-
-    doc.save("struk-belanja.pdf");
-  });
-});
-
-// Fungsi konversi logo ke base64
-async function loadImageAsBase64(url) {
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return await new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    console.warn("Gagal memuat logo:", e);
-    return null;
+  const btnCetak = document.getElementById("btn-print-pdf");
+  if (btnCetak) {
+    btnCetak.addEventListener("click", printReceipt);
   }
-}
+});
