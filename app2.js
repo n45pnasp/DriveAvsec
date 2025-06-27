@@ -2,7 +2,6 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzA8xFUkQKccXmMbpc8
 let products = [];
 let cart = [];
 
-// Load data produk dari Google Sheets
 async function loadProducts() {
   try {
     const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
@@ -18,7 +17,6 @@ async function loadProducts() {
   }
 }
 
-// Tampilkan daftar produk
 function displayProducts() {
   const list = document.getElementById("productList");
   list.innerHTML = "";
@@ -40,7 +38,6 @@ function displayProducts() {
   });
 }
 
-// Render isi keranjang
 function renderCart() {
   const list = document.getElementById("cartList");
   const totalEl = document.getElementById("cartTotal");
@@ -64,7 +61,6 @@ function renderCart() {
   totalEl.textContent = `Total: Rp ${total.toLocaleString()}`;
 }
 
-// Cetak struk PDF
 async function loadImageAsBase64(url) {
   try {
     const response = await fetch(url);
@@ -87,45 +83,56 @@ async function printReceipt() {
   }
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
 
-  const logo = await loadImageAsBase64("logo.png"); // Ganti sesuai path logo kamu
-  let y = 10;
-
-  if (logo) {
-    doc.addImage(logo, 'PNG', 80, y, 20, 20);
-    y += 30;
-  }
-
-  doc.setFontSize(14);
-  doc.text("Toko Belanja Bulanan", 105, y, { align: "center" });
-  y += 10;
-
-  doc.setFontSize(12);
-  doc.text(`Tanggal: ${new Date().toLocaleString()}`, 12, y);
-  y += 8;
-
-  doc.autoTable({
-    startY: y,
-    head: [['Produk', 'Qty', 'Harga', 'Total']],
-    body: cart.map(item => [
-      item.name,
-      item.qty,
-      `Rp ${item.price.toLocaleString()}`,
-      `Rp ${(item.qty * item.price).toLocaleString()}`
-    ]),
-    theme: 'grid',
-    headStyles: { fillColor: [0, 123, 255] },
-    styles: { fontSize: 10 }
+  // 58mm x 200mm (thermal paper size), unit: mm
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [58, 200] // panjang akan menyesuaikan isi
   });
 
+  const pageWidth = 58;
+  let y = 5;
+
+  // Tambahkan logo di tengah
+  const logo = await loadImageAsBase64("logo.png"); // Ganti dengan path logo kamu
+  if (logo) {
+    const logoWidth = 30; // kecilkan agar pas
+    const logoX = (pageWidth - logoWidth) / 2;
+    doc.addImage(logo, 'PNG', logoX, y, logoWidth, logoWidth); // square
+    y += logoWidth + 3;
+  }
+
+  // Nama toko di tengah
+  doc.setFontSize(10);
+  doc.text("TOKO BELANJA BULANAN", pageWidth / 2, y, { align: 'center' });
+  y += 6;
+
+  // Tanggal
+  doc.setFontSize(8);
+  doc.text(`Tanggal: ${new Date().toLocaleString()}`, 2, y);
+  y += 5;
+
+  // Isi produk
+  doc.setFontSize(8);
+  cart.forEach(item => {
+    doc.text(`${item.name} x${item.qty}`, 2, y);
+    doc.text(`Rp ${(item.qty * item.price).toLocaleString()}`, pageWidth - 2, y, { align: 'right' });
+    y += 4;
+  });
+
+  // Total
+  y += 2;
+  doc.setFontSize(9);
+  doc.text("__________________________", pageWidth / 2, y, { align: 'center' });
+  y += 5;
   const total = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
-  doc.text(`Total: Rp ${total.toLocaleString()}`, 14, doc.lastAutoTable.finalY + 10);
+  doc.setFontSize(10);
+  doc.text(`Total: Rp ${total.toLocaleString()}`, pageWidth - 2, y, { align: 'right' });
 
   doc.save("struk-belanja.pdf");
 }
 
-// Event listener
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
 
