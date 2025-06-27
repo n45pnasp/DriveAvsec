@@ -38,6 +38,23 @@ ul {
   margin: 0;
 }
 
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.qty-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 14px;
+}
+
 .product-item {
   display: flex;
   justify-content: space-between;
