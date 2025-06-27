@@ -13,6 +13,11 @@ body {
   padding: 20px;
 }
 
+h1 {
+  text-align: center;
+  color: #333;
+}
+
 /* Header */
 header {
   background-color: #007bff;
@@ -31,31 +36,15 @@ header {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Produk */
+/* Produk & Keranjang */
 ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
+.product-item,
 .cart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.qty-actions {
-  display: flex;
-  gap: 5px;
-}
-
-.btn-small {
-  padding: 4px 10px;
-  font-size: 14px;
-}
-
-.product-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -63,8 +52,14 @@ ul {
   border-bottom: 1px solid #eee;
 }
 
-.product-item:last-child {
+.product-item:last-child,
+.cart-item:last-child {
   border-bottom: none;
+}
+
+.qty-actions {
+  display: flex;
+  gap: 5px;
 }
 
 /* Tombol */
@@ -99,7 +94,7 @@ ul {
 .btn-small {
   padding: 6px 10px;
   font-size: 13px;
-  margin-right: 5px;
+  margin-left: 5px;
 }
 
 .btn:hover {
@@ -109,20 +104,9 @@ ul {
 /* Keranjang */
 #cartTotal {
   font-weight: bold;
-  font-size: 1.1rem;
-  margin-top: 10px;
-}
-
-/* Formulir */
-input[type="text"],
-input[type="number"],
-input[type="search"] {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
+  font-size: 1.2rem;
+  margin-top: 15px;
+  text-align: right;
 }
 
 /* Status */
@@ -146,39 +130,6 @@ input[type="search"] {
   border-left: 5px solid #dc3545;
 }
 
-/* Tabel (jika ada) */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th, td {
-  padding: 12px;
-  border: 1px solid #ddd;
-  text-align: left;
-}
-
-th {
-  background-color: #f0f0f0;
-  font-weight: 600;
-}
-
-/* Scanner */
-#scanner-container {
-  display: none;
-  margin-top: 15px;
-  border: 2px dashed #007bff;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-#interactive {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* Responsif */
 @media (max-width: 600px) {
   .btn,
@@ -188,7 +139,8 @@ th {
     margin-bottom: 10px;
   }
 
-  .product-item {
+  .product-item,
+  .cart-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -196,5 +148,9 @@ th {
 
   .btn {
     align-self: flex-end;
+  }
+
+  #cartTotal {
+    text-align: left;
   }
 }
