@@ -1,86 +1,56 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzer87iN1PfL8GMx_jlm0Ix-u3PSbc_7sk3G2m0BKAiprNKG1lMjHKtzo1YB0H-qQKO/exec';
 let products = [];
-let debounceTimeout = null;
+let searchTimeout = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadProducts();
-  document.getElementById("saveBtn").addEventListener("click", saveProduct);
-  document.getElementById("btn-scan").addEventListener("click", toggleScanner);
-  document.getElementById("search").addEventListener("input", () => {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      searchProducts();
-    }, 2000);
-  });
-});
-
-function showStatus(msg, success = true) {
+function showStatus(msg, isSuccess = true) {
   const el = document.getElementById("statusMessage");
-  el.innerText = msg;
-  el.className = success ? "success" : "error";
+  el.textContent = msg;
+  el.className = isSuccess ? "success" : "error";
   el.style.display = "block";
-  setTimeout(() => (el.style.display = "none"), 3000);
-}
-
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
+  setTimeout(() => el.style.display = "none", 3000);
 }
 
 async function loadProducts() {
   try {
     const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
     const data = await res.json();
-    products = data;
+    products = Array.isArray(data) ? data : [];
     displayProducts(products);
-  } catch (err) {
-    showStatus("Gagal memuat data: " + err.message, false);
+  } catch (e) {
+    showStatus("Gagal memuat produk", false);
   }
 }
 
 function displayProducts(data) {
   const list = document.getElementById("productList");
-  list.innerHTML = "";
-  if (!data || data.length === 0) {
-    list.innerHTML = `<tr><td colspan="5">Tidak ada data</td></tr>`;
-    return;
-  }
-
-  data.forEach(p => {
-    list.innerHTML += `
+  list.innerHTML = data.length === 0
+    ? "<tr><td colspan='5'>Tidak ada data</td></tr>"
+    : data.map(p => `
       <tr>
         <td>${p.Barcode || p.barcode}</td>
         <td>${p["Nama Produk"] || p.productName}</td>
         <td>${p.Jumlah || p.quantity}</td>
-        <td>${formatCurrency(p.Harga || p.price)}</td>
+        <td>Rp ${Number(p.Harga || p.price).toLocaleString()}</td>
         <td>
           <button class="btn btn-small btn-secondary" onclick="editProduct('${p.Barcode || p.barcode}')">Edit</button>
           <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.Barcode || p.barcode}')">Hapus</button>
         </td>
-      </tr>`;
-  });
+      </tr>`).join("");
 }
 
 function searchProducts() {
-  const term = document.getElementById("search").value.trim().toLowerCase();
-
-  // Pastikan term ada
-  if (!term) {
-    displayProducts(products); // jika kosong, tampilkan semua
-    return;
-  }
-
-  const filtered = products.filter(p => {
-    const barcode = (p.Barcode || p.barcode || "").toString().toLowerCase();
-    const nama = (p["Nama Produk"] || p.productName || "").toString().toLowerCase();
-    return barcode.includes(term) || nama.includes(term);
-  });
-
+  const term = document.getElementById("search").value.toLowerCase();
+  const filtered = products.filter(p =>
+    (p.Barcode || p.barcode).toLowerCase().includes(term) ||
+    (p["Nama Produk"] || p.productName).toLowerCase().includes(term)
+  );
   displayProducts(filtered);
 }
+
+document.getElementById("search").addEventListener("input", () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(searchProducts, 2000);
+});
 
 async function saveProduct() {
   const barcode = document.getElementById("barcode").value.trim();
@@ -89,7 +59,7 @@ async function saveProduct() {
   const price = document.getElementById("price").value.trim();
 
   if (!barcode || !productName || !price) {
-    showStatus("Semua kolom harus diisi!", false);
+    showStatus("Isi semua kolom!", false);
     return;
   }
 
@@ -99,22 +69,21 @@ async function saveProduct() {
   formData.append("quantity", quantity);
   formData.append("price", price);
 
-  try {
-    document.getElementById("saveBtn").disabled = true;
-    document.getElementById("saveSpinner").style.display = "inline";
+  document.getElementById("saveBtn").disabled = true;
+  document.getElementById("saveSpinner").style.display = "inline";
 
+  try {
     const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
     const result = await res.json();
-
     if (result.success) {
-      showStatus("Produk berhasil disimpan");
+      showStatus("Produk berhasil disimpan!");
       resetForm();
-      await loadProducts();
+      loadProducts();
     } else {
-      throw new Error(result.error || "Gagal menyimpan");
+      throw new Error(result.error);
     }
-  } catch (err) {
-    showStatus("Error: " + err.message, false);
+  } catch (e) {
+    showStatus("Gagal menyimpan produk", false);
   } finally {
     document.getElementById("saveBtn").disabled = false;
     document.getElementById("saveSpinner").style.display = "none";
@@ -122,8 +91,10 @@ async function saveProduct() {
 }
 
 function resetForm() {
-  ["barcode", "productName", "price"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("barcode").value = "";
+  document.getElementById("productName").value = "";
   document.getElementById("quantity").value = "1";
+  document.getElementById("price").value = "";
 }
 
 function editProduct(barcode) {
@@ -141,24 +112,22 @@ async function deleteProduct(barcode) {
   if (!confirm("Yakin ingin menghapus produk ini?")) return;
   const formData = new FormData();
   formData.append("delete", barcode);
-
   try {
     const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
     const result = await res.json();
     if (result.success) {
-      showStatus("Produk dihapus");
-      await loadProducts();
-    } else {
-      throw new Error(result.error || "Gagal menghapus");
-    }
-  } catch (err) {
-    showStatus("Error: " + err.message, false);
+      showStatus("Produk berhasil dihapus");
+      loadProducts();
+    } else throw new Error(result.error);
+  } catch (e) {
+    showStatus("Gagal menghapus produk", false);
   }
 }
 
-// === SCAN BARCODE ===
-function toggleScanner() {
+// Barcode Scanner untuk Tambah Produk
+document.getElementById("btn-scan").addEventListener("click", () => {
   const container = document.getElementById("scanner-container");
+
   if (container.style.display === "block") {
     Quagga.stop();
     container.style.display = "none";
@@ -174,25 +143,4 @@ function toggleScanner() {
       target: document.querySelector("#interactive"),
       constraints: { facingMode: "environment" }
     },
-    decoder: {
-      readers: ["ean_reader", "code_128_reader", "upc_reader"]
-    }
-  }, function (err) {
-    if (err) {
-      console.error("Quagga error", err);
-      showStatus("Gagal membuka kamera", false);
-      return;
-    }
-    Quagga.start();
-  });
-
-  Quagga.onDetected((data) => {
-    if (data && data.codeResult && data.codeResult.code) {
-      const barcode = data.codeResult.code;
-      document.getElementById("barcode").value = barcode;
-      Quagga.stop();
-      container.style.display = "none";
-      showStatus("Barcode berhasil dipindai");
-    }
-  });
-}
+    decoder:
