@@ -43,12 +43,19 @@ function renderCart() {
   const totalEl = document.getElementById("cartTotal");
 
   list.innerHTML = "";
-
   let total = 0;
-  cart.forEach(item => {
+
+  cart.forEach((item, index) => {
     total += item.qty * item.price;
+
     const li = document.createElement("li");
-    li.textContent = `${item.name} × ${item.qty} = Rp ${Number(item.qty * item.price).toLocaleString()}`;
+    li.className = "cart-item";
+    li.innerHTML = `
+      <span>${item.name} × ${item.qty} = Rp ${Number(item.qty * item.price).toLocaleString()}</span>
+      <div class="qty-actions">
+        <button class="btn btn-small btn-minus" data-index="${index}">−</button>
+      </div>
+    `;
     list.appendChild(li);
   });
 
@@ -72,6 +79,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       renderCart();
+    }
+  });
+
+  document.getElementById("cartList").addEventListener("click", e => {
+    if (e.target.classList.contains("btn-minus")) {
+      const index = parseInt(e.target.dataset.index);
+      if (!isNaN(index) && cart[index]) {
+        if (cart[index].qty > 1) {
+          cart[index].qty--;
+        } else {
+          cart.splice(index, 1);
+        }
+        renderCart();
+      }
     }
   });
 });
