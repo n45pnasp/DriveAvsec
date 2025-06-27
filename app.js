@@ -1,37 +1,33 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzer87iN1PfL8GMx_jlm0Ix-u3PSbc_7sk3G2m0BKAiprNKG1lMjHKtzo1YB0H-qQKO/exec';
 let products = [];
 let isScannerActive = false;
+let targetInput = "barcode";
 
-function showStatus(msg, isSuccess) {
-  const el = document.getElementById('statusMessage');
+function showStatus(msg, isSuccess = true) {
+  const el = document.getElementById("statusMessage");
   el.textContent = msg;
-  el.className = isSuccess ? 'success' : 'error';
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3000);
+  el.className = isSuccess ? "success" : "error";
+  el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 3000);
 }
 
 async function loadProducts() {
   try {
     const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
     const data = await res.json();
-    if (Array.isArray(data)) {
-      products = data;
-      displayProducts(data);
-    }
+    products = data;
+    displayProducts(products);
   } catch (err) {
     showStatus("Gagal memuat data: " + err.message, false);
   }
 }
 
 function displayProducts(data) {
-  const list = document.getElementById('productList');
-  list.innerHTML = "";
-  if (data.length === 0) {
-    list.innerHTML = `<tr><td colspan="5">Tidak ada data</td></tr>`;
-    return;
-  }
+  const tbody = document.getElementById("productList");
+  tbody.innerHTML = data.length === 0 ? "<tr><td colspan='5'>Tidak ada data</td></tr>" : "";
+
   data.forEach(p => {
-    list.innerHTML += `
+    const row = `
       <tr>
         <td>${p.Barcode || p.barcode}</td>
         <td>${p["Nama Produk"] || p.productName}</td>
@@ -42,26 +38,29 @@ function displayProducts(data) {
           <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.Barcode || p.barcode}')">Hapus</button>
         </td>
       </tr>`;
+    tbody.innerHTML += row;
   });
 }
 
 function searchProducts() {
   const term = document.getElementById("search").value.toLowerCase();
   const filtered = products.filter(p =>
-    (p.Barcode || p.barcode || '').toLowerCase().includes(term) ||
-    (p["Nama Produk"] || p.productName || '').toLowerCase().includes(term)
+    (p.Barcode || p.barcode || "").toLowerCase().includes(term) ||
+    (p["Nama Produk"] || p.productName || "").toLowerCase().includes(term)
   );
   displayProducts(filtered);
 }
 
-async function saveProduct() {
+document.getElementById("search").addEventListener("input", searchProducts);
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
   const barcode = document.getElementById("barcode").value.trim();
   const productName = document.getElementById("productName").value.trim();
   const quantity = document.getElementById("quantity").value.trim();
   const price = document.getElementById("price").value.trim();
 
   if (!barcode || !productName || !price) {
-    showStatus("Semua field harus diisi!", false);
+    showStatus("Semua field wajib diisi!", false);
     return;
   }
 
@@ -77,25 +76,23 @@ async function saveProduct() {
     const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
     const result = await res.json();
     if (result.success) {
-      showStatus("Produk berhasil disimpan!", true);
+      showStatus("Produk berhasil disimpan!");
       resetForm();
-      await loadProducts();
-    } else {
-      throw new Error(result.error || "Gagal menyimpan");
-    }
+      loadProducts();
+    } else throw new Error(result.error);
   } catch (err) {
-    showStatus("Gagal: " + err.message, false);
+    showStatus("Gagal menyimpan: " + err.message, false);
   } finally {
     document.getElementById("saveBtn").disabled = false;
     document.getElementById("saveSpinner").style.display = "none";
   }
-}
+});
 
 function resetForm() {
-  document.getElementById("barcode").value = "";
-  document.getElementById("productName").value = "";
+  ["barcode", "productName", "quantity", "price"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
   document.getElementById("quantity").value = "1";
-  document.getElementById("price").value = "";
 }
 
 function editProduct(barcode) {
@@ -117,16 +114,19 @@ async function deleteProduct(barcode) {
     const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
     const result = await res.json();
     if (result.success) {
-      showStatus("Produk dihapus!", true);
-      await loadProducts();
+      showStatus("Produk dihapus!");
+      loadProducts();
     } else throw new Error(result.error);
   } catch (err) {
-    showStatus("Error: " + err.message, false);
+    showStatus("Gagal menghapus: " + err.message, false);
   }
 }
 
-document.getElementById("btn-scan").addEventListener("click", () => {
+// Toggle kamera scanner untuk input tertentu
+function toggleScanner(inputId) {
   const container = document.getElementById("scanner-container");
+  targetInput = inputId;
+
   if (isScannerActive) {
     Quagga.stop();
     container.style.display = "none";
@@ -147,8 +147,8 @@ document.getElementById("btn-scan").addEventListener("click", () => {
     }
   }, err => {
     if (err) {
+      showStatus("Kamera gagal dibuka", false);
       console.error(err);
-      showStatus("Gagal membuka kamera", false);
       return;
     }
     Quagga.start();
@@ -157,13 +157,13 @@ document.getElementById("btn-scan").addEventListener("click", () => {
 
   Quagga.onDetected(result => {
     const code = result.codeResult.code;
-    document.getElementById("barcode").value = code;
-    showStatus("Barcode terbaca: " + code, true);
+    document.getElementById(targetInput).value = code;
+    if (targetInput === "search") searchProducts();
+    showStatus("Barcode: " + code);
     Quagga.stop();
     container.style.display = "none";
     isScannerActive = false;
   });
-});
+}
 
-document.getElementById("saveBtn").addEventListener("click", saveProduct);
 document.addEventListener("DOMContentLoaded", loadProducts);
