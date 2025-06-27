@@ -93,16 +93,16 @@ async function printReceipt() {
   let y = 10;
 
   if (logo) {
-    doc.addImage(logo, 'PNG', 80, y, 50, 20);
+    doc.addImage(logo, 'PNG', 80, y, 80, 20);
     y += 25;
   }
 
   doc.setFontSize(14);
-  doc.text("Toko Drive Avsec", 105, y, { align: "center" });
+  doc.text("Toko Belanja Bulanan", 105, y, { align: "center" });
   y += 10;
 
   doc.setFontSize(12);
-  doc.text(`Tanggal: ${new Date().toLocaleString()}`, 14, y);
+  doc.text(`Tanggal: ${new Date().toLocaleString()}`, 12, y);
   y += 8;
 
   doc.autoTable({
