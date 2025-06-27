@@ -12,48 +12,49 @@
             <h1>Alat Cek Produk</h1>
         </div>
     </header>
-    
+
     <main class="container">
         <div class="card">
             <div id="statusMessage" class="status-message"></div>
-            
+
             <div class="form-group">
                 <label for="barcode">Barcode:</label>
                 <div class="input-with-button">
                     <input type="text" id="barcode" placeholder="Scan atau masukkan barcode">
                     <button class="btn btn-secondary" onclick="startBarcodeScanner()">Scan</button>
                 </div>
+                <video id="video" autoplay playsinline style="display:none; width:100%; max-height:300px; margin-top:10px; border:1px solid #ccc; border-radius:8px;"></video>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="productName">Nama Produk:</label>
                     <input type="text" id="productName" placeholder="Nama produk">
                 </div>
-                
+
                 <div class="form-group quantity-group">
                     <label for="quantity">Jumlah:</label>
                     <input type="number" id="quantity" value="1" min="1">
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label for="price">Harga (Rp):</label>
                 <input type="number" id="price" placeholder="Harga produk">
             </div>
-            
+
             <button id="saveBtn" class="btn btn-primary" onclick="saveProduct()">
                 Simpan Produk
                 <span id="saveSpinner" class="loading"></span>
             </button>
         </div>
-        
+
         <div class="card">
             <div class="form-group">
                 <label for="search">Cari Produk:</label>
                 <input type="text" id="search" placeholder="Cari berdasarkan barcode atau nama" oninput="searchProducts()">
             </div>
-            
+
             <div class="table-container">
                 <table id="productTable">
                     <thead>
@@ -74,61 +75,44 @@
     </main>
 
     <script>
-        // URL Web Apps Script Anda
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLRWVKU9POWl3yihNygmhFzgDTRO5OZFN6VsId98Fpuvf4E11_6_2ovjS-_Gsfs0Df/exec';
-        
         let products = [];
-        
+
         function showStatus(message, isSuccess) {
             const statusElement = document.getElementById('statusMessage');
             statusElement.textContent = message;
             statusElement.className = isSuccess ? 'status-message success' : 'status-message error';
             statusElement.style.display = 'block';
-            
-            setTimeout(() => {
-                statusElement.style.display = 'none';
-            }, 3000);
+            setTimeout(() => statusElement.style.display = 'none', 3000);
         }
-        
+
         function formatCurrency(amount) {
             return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
+                style: 'currency', currency: 'IDR', minimumFractionDigits: 0
             }).format(amount);
         }
-        
+
         async function loadProducts() {
             try {
-                // Tambahkan timestamp untuk menghindari cache
                 const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-                
                 if (!response.ok) throw new Error('Gagal memuat data');
-                
                 const data = await response.json();
-                
-                // Pastikan data adalah array
                 if (Array.isArray(data)) {
                     products = data;
                     displayProducts(products);
-                } else {
-                    throw new Error('Format data tidak valid');
-                }
+                } else throw new Error('Format data tidak valid');
             } catch (error) {
-                console.error('Error:', error);
                 showStatus('Gagal memuat data produk: ' + error.message, false);
             }
         }
-        
+
         function displayProducts(productsToDisplay) {
             const productList = document.getElementById('productList');
             productList.innerHTML = '';
-            
             if (productsToDisplay.length === 0) {
                 productList.innerHTML = `<tr><td colspan="5" class="no-data">Tidak ada data produk</td></tr>`;
                 return;
             }
-            
             productsToDisplay.forEach(product => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -141,71 +125,57 @@
                             <button class="btn btn-small btn-secondary" onclick="editProduct('${product.Barcode || product.barcode}')">Edit</button>
                             <button class="btn btn-small btn-danger" onclick="deleteProduct('${product.Barcode || product.barcode}')">Hapus</button>
                         </div>
-                    </td>
-                `;
+                    </td>`;
                 productList.appendChild(row);
             });
         }
-        
+
         function searchProducts() {
             const searchTerm = document.getElementById('search').value.toLowerCase();
-            const filteredProducts = products.filter(p => 
-                (p.Barcode || p.barcode || '').toString().toLowerCase().includes(searchTerm) || 
-                (p['Nama Produk'] || p.productName || '').toString().toLowerCase().includes(searchTerm)
+            const filtered = products.filter(p =>
+                (p.Barcode || p.barcode || '').toLowerCase().includes(searchTerm) ||
+                (p['Nama Produk'] || p.productName || '').toLowerCase().includes(searchTerm)
             );
-            displayProducts(filteredProducts);
+            displayProducts(filtered);
         }
-        
+
         async function saveProduct() {
             const barcode = document.getElementById('barcode').value.trim();
             const productName = document.getElementById('productName').value.trim();
             const quantity = document.getElementById('quantity').value.trim() || '1';
             const price = document.getElementById('price').value.trim();
-            
             if (!barcode || !productName || !price) {
-                showStatus('Barcode, Nama Produk, dan Harga harus diisi!', false);
-                return;
+                showStatus('Barcode, Nama Produk, dan Harga harus diisi!', false); return;
             }
-            
+
             const saveBtn = document.getElementById('saveBtn');
             const spinner = document.getElementById('saveSpinner');
-            
-            saveBtn.disabled = true;
-            spinner.style.display = 'inline-block';
-            
+            saveBtn.disabled = true; spinner.style.display = 'inline-block';
+
             try {
-                // Gunakan FormData untuk mengatasi masalah CORS
                 const formData = new FormData();
                 formData.append('barcode', barcode);
                 formData.append('productName', productName);
                 formData.append('quantity', quantity);
                 formData.append('price', price);
-                
+
                 const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: formData,
-                    redirect: 'follow'
+                    method: 'POST', body: formData, redirect: 'follow'
                 });
-                
-                // Handle redirect dari Google Apps Script
                 const result = await response.json();
-                
                 if (result && result.success) {
                     showStatus('Produk berhasil disimpan!', true);
-                    resetForm();
-                    await loadProducts();
+                    resetForm(); await loadProducts();
                 } else {
                     throw new Error(result?.error || 'Gagal menyimpan produk');
                 }
             } catch (error) {
-                console.error('Error:', error);
                 showStatus('Gagal menyimpan produk: ' + error.message, false);
             } finally {
-                saveBtn.disabled = false;
-                spinner.style.display = 'none';
+                saveBtn.disabled = false; spinner.style.display = 'none';
             }
         }
-        
+
         function resetForm() {
             document.getElementById('barcode').value = '';
             document.getElementById('productName').value = '';
@@ -213,7 +183,7 @@
             document.getElementById('price').value = '';
             document.getElementById('barcode').focus();
         }
-        
+
         function editProduct(barcode) {
             const product = products.find(p => (p.Barcode || p.barcode) === barcode);
             if (product) {
@@ -225,23 +195,16 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
-        
+
         async function deleteProduct(barcode) {
             if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
-            
             try {
-                // Gunakan FormData untuk menghapus
                 const formData = new FormData();
                 formData.append('delete', barcode);
-                
                 const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: formData,
-                    redirect: 'follow'
+                    method: 'POST', body: formData, redirect: 'follow'
                 });
-                
                 const result = await response.json();
-                
                 if (result && result.success) {
                     showStatus('Produk berhasil dihapus!', true);
                     await loadProducts();
@@ -249,15 +212,13 @@
                     throw new Error(result?.error || 'Gagal menghapus produk');
                 }
             } catch (error) {
-                console.error('Error:', error);
                 showStatus('Gagal menghapus produk: ' + error.message, false);
             }
         }
-        
-        document.getElementById('barcode').addEventListener('change', function() {
+
+        document.getElementById('barcode').addEventListener('change', function () {
             const barcode = this.value.trim();
             if (!barcode) return;
-            
             const product = products.find(p => (p.Barcode || p.barcode) === barcode);
             if (product) {
                 document.getElementById('productName').value = product['Nama Produk'] || product.productName;
@@ -265,14 +226,49 @@
                 document.getElementById('price').value = product.Harga || product.price;
             }
         });
-        
-        function startBarcodeScanner() {
-            alert('Untuk implementasi nyata, gunakan library scanner barcode.\n\nUntuk demo, barcode akan diisi otomatis.');
-            document.getElementById('barcode').value = 'BRC' + Math.floor(100000 + Math.random() * 900000);
-            document.getElementById('barcode').focus();
+
+        async function startBarcodeScanner() {
+            const barcodeInput = document.getElementById('barcode');
+            const video = document.getElementById('video');
+
+            if (!('BarcodeDetector' in window)) {
+                alert("Browser Anda tidak mendukung Barcode Detector.\nSilakan input manual.");
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.style.display = 'block';
+
+                const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'code_39'] });
+
+                const scanLoop = async () => {
+                    try {
+                        const barcodes = await detector.detect(video);
+                        if (barcodes.length > 0) {
+                            const barcode = barcodes[0].rawValue;
+                            barcodeInput.value = barcode;
+                            video.pause();
+                            video.srcObject.getTracks().forEach(track => track.stop());
+                            video.style.display = 'none';
+                            barcodeInput.focus();
+                            return;
+                        }
+                    } catch (err) {
+                        console.error("Scan error:", err);
+                    }
+                    requestAnimationFrame(scanLoop);
+                };
+
+                scanLoop();
+
+            } catch (err) {
+                alert("Akses kamera ditolak atau tidak tersedia. Silakan input barcode secara manual.");
+                console.error("Camera error:", err);
+            }
         }
-        
-        // Muat data saat halaman dimuat
+
         document.addEventListener('DOMContentLoaded', loadProducts);
     </script>
 </body>
