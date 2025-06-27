@@ -1,4 +1,4 @@
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzer87iN1PfL8GMx_jlm0Ix-u3PSbc_7sk3G2m0BKAiprNKG1lMjHKtzo1YB0H-qQKO/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtuiLjAtRt7WIIAbRBfpIuGLggBWRbGHC_dUcywE1HduxPg7Bo17pjzlkcvegDvAd6/exec';
 let products = [];
 let isScannerActive = false;
 
@@ -59,6 +59,7 @@ async function saveProduct() {
   const productName = document.getElementById("productName").value.trim();
   const quantity = document.getElementById("quantity").value.trim();
   const price = document.getElementById("price").value.trim();
+  const original = document.getElementById("originalBarcode").value.trim();
 
   if (!barcode || !productName || !price) {
     showStatus("Semua field harus diisi!", false);
@@ -70,6 +71,7 @@ async function saveProduct() {
   formData.append("productName", productName);
   formData.append("quantity", quantity);
   formData.append("price", price);
+  formData.append("originalBarcode", original);
 
   try {
     document.getElementById("saveBtn").disabled = true;
@@ -96,6 +98,7 @@ function resetForm() {
   document.getElementById("productName").value = "";
   document.getElementById("quantity").value = "1";
   document.getElementById("price").value = "";
+  document.getElementById("originalBarcode").value = "";
 }
 
 function editProduct(barcode) {
@@ -105,6 +108,7 @@ function editProduct(barcode) {
     document.getElementById("productName").value = p["Nama Produk"] || p.productName;
     document.getElementById("quantity").value = p.Jumlah || p.quantity;
     document.getElementById("price").value = p.Harga || p.price;
+    document.getElementById("originalBarcode").value = barcode;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
