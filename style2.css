@@ -97,6 +97,11 @@ ul {
   margin-left: 5px;
 }
 
+.btn-minus {
+  background-color: red;
+  color: white;
+}
+
 .btn:hover {
   opacity: 0.9;
 }
