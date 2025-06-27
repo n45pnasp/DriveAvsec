@@ -1,7 +1,10 @@
+/* Umum */
 body {
-  font-family: sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  background: #f2f2f2;
+  padding: 0;
+  background-color: #f4f6f8;
+  color: #333;
 }
 
 .container {
@@ -10,46 +13,171 @@ body {
   padding: 20px;
 }
 
+/* Header */
 header {
-  background: #007bff;
+  background-color: #007bff;
   color: white;
-  padding: 20px;
+  padding: 20px 0;
   text-align: center;
-  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Card */
 .card {
-  background: white;
+  background-color: white;
   border-radius: 8px;
   padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-button.btn {
-  padding: 6px 10px;
-  margin-left: 8px;
+/* Produk */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.product-item:last-child {
+  border-bottom: none;
+}
+
+/* Tombol */
+.btn {
+  padding: 10px 16px;
+  font-size: 14px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .btn-primary {
-  background: #007bff;
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
   color: white;
 }
 
 .btn-danger {
-  background: #dc3545;
+  background-color: #dc3545;
   color: white;
 }
 
-input.qty-input {
-  width: 60px;
-  padding: 4px;
-  margin-left: 8px;
+.btn-add {
+  background-color: #28a745;
+  color: white;
 }
 
-li {
-  margin-bottom: 12px;
+.btn-small {
+  padding: 6px 10px;
+  font-size: 13px;
+  margin-right: 5px;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* Keranjang */
+#cartTotal {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-top: 10px;
+}
+
+/* Formulir */
+input[type="text"],
+input[type="number"],
+input[type="search"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Status */
+#statusMessage {
+  display: none;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 5px solid #28a745;
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left: 5px solid #dc3545;
+}
+
+/* Tabel (jika ada) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background-color: #f0f0f0;
+  font-weight: 600;
+}
+
+/* Scanner */
+#scanner-container {
+  display: none;
+  margin-top: 15px;
+  border: 2px dashed #007bff;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+#interactive {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Responsif */
+@media (max-width: 600px) {
+  .btn,
+  input[type="text"],
+  input[type="number"] {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .product-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .btn {
+    align-self: flex-end;
+  }
 }
