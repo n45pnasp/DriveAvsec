@@ -65,7 +65,6 @@ function renderCart() {
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
 
-  // Tombol tambah produk ke keranjang
   document.getElementById("productList").addEventListener("click", e => {
     if (e.target.classList.contains("btn-add")) {
       const barcode = decodeURIComponent(e.target.dataset.barcode);
@@ -83,7 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Tombol kurang dari keranjang
   document.getElementById("cartList").addEventListener("click", e => {
     if (e.target.classList.contains("btn-minus")) {
       const index = parseInt(e.target.dataset.index);
@@ -98,32 +96,67 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Tombol cetak struk
-  document.getElementById("btn-print").addEventListener("click", () => {
+  document.getElementById("btn-print-pdf").addEventListener("click", async () => {
     if (cart.length === 0) {
-      alert("Keranjang kosong, tidak bisa mencetak struk.");
+      alert("Keranjang kosong, tidak bisa mencetak.");
       return;
     }
 
-    let strukWindow = window.open('', '_blank');
-    strukWindow.document.write('<html><head><title>Struk Belanja</title>');
-    strukWindow.document.write('<style>body{font-family:sans-serif;padding:20px;} h2{margin-bottom:10px;} table{width:100%;border-collapse:collapse;} th,td{padding:8px;border:1px solid #ccc;} th{text-align:left;background:#f0f0f0;} .total{text-align:right;margin-top:20px;font-weight:bold;}</style>');
-    strukWindow.document.write('</head><body>');
-    strukWindow.document.write('<h2>Struk Belanja</h2>');
-    strukWindow.document.write('<table>');
-    strukWindow.document.write('<tr><th>Produk</th><th>Qty</th><th>Subtotal</th></tr>');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const logoImg = await loadImageAsBase64('logo.png');
 
-    let total = 0;
-    cart.forEach(item => {
-      const subtotal = item.qty * item.price;
-      total += subtotal;
-      strukWindow.document.write(`<tr><td>${item.name}</td><td>${item.qty}</td><td>Rp ${subtotal.toLocaleString()}</td></tr>`);
+    // HEADER
+    if (logoImg) {
+      doc.addImage(logoImg, 'PNG', 15, 10, 25, 25);
+    }
+    doc.setFontSize(16);
+    doc.text("TOKO AVSEC MAJU", 45, 15);
+    doc.setFontSize(10);
+    doc.text("Jl. Terminal Airport No. 99\nJakarta - Indonesia", 45, 21);
+    doc.text(`Tanggal: ${new Date().toLocaleString()}`, 45, 30);
+
+    // TABEL
+    const rows = cart.map(item => [
+      item.name,
+      item.qty,
+      `Rp ${Number(item.price).toLocaleString()}`,
+      `Rp ${(item.qty * item.price).toLocaleString()}`
+    ]);
+    const total = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+
+    doc.autoTable({
+      startY: 40,
+      head: [["Produk", "Qty", "Harga", "Subtotal"]],
+      body: rows,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [0, 123, 255] }
     });
 
-    strukWindow.document.write('</table>');
-    strukWindow.document.write(`<div class="total">Total: Rp ${total.toLocaleString()}</div>`);
-    strukWindow.document.write('</body></html>');
-    strukWindow.document.close();
-    strukWindow.print();
+    doc.setFontSize(12);
+    doc.setFont(undefined, "bold");
+    doc.text(`Total: Rp ${total.toLocaleString()}`, 145, doc.lastAutoTable.finalY + 10, { align: "right" });
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, "normal");
+    doc.text("Terima kasih telah berbelanja di Toko Avsec Maju!", 14, doc.lastAutoTable.finalY + 20);
+
+    doc.save("struk-belanja.pdf");
   });
 });
+
+// Fungsi konversi logo ke base64
+async function loadImageAsBase64(url) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.warn("Gagal memuat logo:", e);
+    return null;
+  }
+}
