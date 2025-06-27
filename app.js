@@ -46,18 +46,12 @@ function displayProducts(data) {
 }
 
 function searchProducts() {
-  const term = document.getElementById("search").value.trim().toLowerCase();
+  const term = document.getElementById("search").value.toLowerCase();
   const filtered = products.filter(p =>
     (p.Barcode || p.barcode || '').toLowerCase().includes(term) ||
     (p["Nama Produk"] || p.productName || '').toLowerCase().includes(term)
   );
   displayProducts(filtered);
-}
-
-let searchTimeout;
-function debounceSearch() {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(searchProducts, 2000); // 2 detik jeda
 }
 
 async function saveProduct() {
@@ -172,5 +166,4 @@ document.getElementById("btn-scan").addEventListener("click", () => {
 });
 
 document.getElementById("saveBtn").addEventListener("click", saveProduct);
-document.getElementById("search").addEventListener("input", debounceSearch);
 document.addEventListener("DOMContentLoaded", loadProducts);
