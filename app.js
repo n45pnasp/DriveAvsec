@@ -1,82 +1,75 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzer87iN1PfL8GMx_jlm0Ix-u3PSbc_7sk3G2m0BKAiprNKG1lMjHKtzo1YB0H-qQKO/exec';
-
 let products = [];
-let searchTimeout = null;
+let debounceTimeout = null;
 
-// Load data produk saat halaman dibuka
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
-
   document.getElementById("saveBtn").addEventListener("click", saveProduct);
   document.getElementById("btn-scan").addEventListener("click", toggleScanner);
-  document.getElementById("search").addEventListener("input", function () {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
+  document.getElementById("search").addEventListener("input", () => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
       searchProducts();
     }, 2000);
   });
 });
 
-// Menampilkan status
-function showStatus(message, isSuccess = true) {
+function showStatus(msg, success = true) {
   const el = document.getElementById("statusMessage");
-  el.innerText = message;
-  el.className = isSuccess ? "success" : "error";
+  el.innerText = msg;
+  el.className = success ? "success" : "error";
   el.style.display = "block";
   setTimeout(() => (el.style.display = "none"), 3000);
 }
 
-// Format ke rupiah
 function formatCurrency(amount) {
   return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
+    style: "currency", currency: "IDR", minimumFractionDigits: 0
   }).format(amount);
 }
 
-// Load data dari Apps Script
 async function loadProducts() {
   try {
-    const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-    const data = await response.json();
-    if (Array.isArray(data)) {
-      products = data;
-      displayProducts(products);
-    } else {
-      throw new Error("Data tidak valid");
-    }
+    const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+    const data = await res.json();
+    products = data;
+    displayProducts(products);
   } catch (err) {
     showStatus("Gagal memuat data: " + err.message, false);
   }
 }
 
-// Tampilkan produk di tabel
 function displayProducts(data) {
-  const tbody = document.getElementById("productList");
-  tbody.innerHTML = "";
+  const list = document.getElementById("productList");
+  list.innerHTML = "";
   if (data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5">Tidak ada data</td></tr>`;
+    list.innerHTML = `<tr><td colspan="5">Tidak ada data</td></tr>`;
     return;
   }
-
-  data.forEach((p) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${p.Barcode || p.barcode}</td>
-      <td>${p["Nama Produk"] || p.productName}</td>
-      <td>${p.Jumlah || p.quantity}</td>
-      <td>${formatCurrency(p.Harga || p.price)}</td>
-      <td>
-        <button class="btn btn-small btn-secondary" onclick="editProduct('${p.Barcode || p.barcode}')">Edit</button>
-        <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.Barcode || p.barcode}')">Hapus</button>
-      </td>
-    `;
-    tbody.appendChild(row);
+  data.forEach(p => {
+    list.innerHTML += `
+      <tr>
+        <td>${p.Barcode || p.barcode}</td>
+        <td>${p["Nama Produk"] || p.productName}</td>
+        <td>${p.Jumlah || p.quantity}</td>
+        <td>${formatCurrency(p.Harga || p.price)}</td>
+        <td>
+          <button class="btn btn-small btn-secondary" onclick="editProduct('${p.Barcode || p.barcode}')">Edit</button>
+          <button class="btn btn-small btn-danger" onclick="deleteProduct('${p.Barcode || p.barcode}')">Hapus</button>
+        </td>
+      </tr>`;
   });
 }
 
-// Simpan produk
+function searchProducts() {
+  const term = document.getElementById("search").value.toLowerCase();
+  const filtered = products.filter(p =>
+    (p.Barcode || p.barcode || '').toLowerCase().includes(term) ||
+    (p["Nama Produk"] || p.productName || '').toLowerCase().includes(term)
+  );
+  displayProducts(filtered);
+}
+
 async function saveProduct() {
   const barcode = document.getElementById("barcode").value.trim();
   const productName = document.getElementById("productName").value.trim();
@@ -84,7 +77,7 @@ async function saveProduct() {
   const price = document.getElementById("price").value.trim();
 
   if (!barcode || !productName || !price) {
-    showStatus("Isi semua kolom!", false);
+    showStatus("Semua kolom harus diisi!", false);
     return;
   }
 
@@ -96,7 +89,7 @@ async function saveProduct() {
 
   try {
     document.getElementById("saveBtn").disabled = true;
-    document.getElementById("saveSpinner").style.display = "inline-block";
+    document.getElementById("saveSpinner").style.display = "inline";
 
     const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
     const result = await res.json();
@@ -116,26 +109,22 @@ async function saveProduct() {
   }
 }
 
-// Reset form input
 function resetForm() {
-  ["barcode", "productName", "price"].forEach((id) => {
-    document.getElementById(id).value = "";
-  });
+  ["barcode", "productName", "price"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("quantity").value = "1";
 }
 
-// Edit produk
 function editProduct(barcode) {
-  const p = products.find((p) => (p.Barcode || p.barcode) === barcode);
-  if (!p) return;
-  document.getElementById("barcode").value = p.Barcode || p.barcode;
-  document.getElementById("productName").value = p["Nama Produk"] || p.productName;
-  document.getElementById("quantity").value = p.Jumlah || p.quantity;
-  document.getElementById("price").value = p.Harga || p.price;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const p = products.find(p => (p.Barcode || p.barcode) === barcode);
+  if (p) {
+    document.getElementById("barcode").value = p.Barcode || p.barcode;
+    document.getElementById("productName").value = p["Nama Produk"] || p.productName;
+    document.getElementById("quantity").value = p.Jumlah || p.quantity;
+    document.getElementById("price").value = p.Harga || p.price;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
-// Hapus produk
 async function deleteProduct(barcode) {
   if (!confirm("Yakin ingin menghapus produk ini?")) return;
   const formData = new FormData();
@@ -145,7 +134,7 @@ async function deleteProduct(barcode) {
     const res = await fetch(SCRIPT_URL, { method: "POST", body: formData });
     const result = await res.json();
     if (result.success) {
-      showStatus("Produk berhasil dihapus");
+      showStatus("Produk dihapus");
       await loadProducts();
     } else {
       throw new Error(result.error || "Gagal menghapus");
@@ -155,57 +144,42 @@ async function deleteProduct(barcode) {
   }
 }
 
-// Pencarian produk
-function searchProducts() {
-  const term = document.getElementById("search").value.toLowerCase();
-  const filtered = products.filter((p) =>
-    (p.Barcode || p.barcode || "").toLowerCase().includes(term) ||
-    (p["Nama Produk"] || p.productName || "").toLowerCase().includes(term)
-  );
-  displayProducts(filtered);
-}
-
-// Toggle kamera scan barcode
+// === SCAN BARCODE ===
 function toggleScanner() {
-  const scannerContainer = document.getElementById("scanner-container");
-  if (scannerContainer.style.display === "block") {
+  const container = document.getElementById("scanner-container");
+  if (container.style.display === "block") {
     Quagga.stop();
-    scannerContainer.style.display = "none";
+    container.style.display = "none";
     return;
   }
 
-  scannerContainer.style.display = "block";
+  container.style.display = "block";
 
-  Quagga.init(
-    {
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector("#interactive"),
-        constraints: {
-          facingMode: "environment",
-        },
-      },
-      decoder: {
-        readers: ["ean_reader", "code_128_reader", "upc_reader"],
-      },
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector("#interactive"),
+      constraints: { facingMode: "environment" }
     },
-    function (err) {
-      if (err) {
-        console.error("Quagga init error:", err);
-        showStatus("Kamera gagal dinyalakan", false);
-        return;
-      }
-      Quagga.start();
+    decoder: {
+      readers: ["ean_reader", "code_128_reader", "upc_reader"]
     }
-  );
+  }, function (err) {
+    if (err) {
+      console.error("Quagga error", err);
+      showStatus("Gagal membuka kamera", false);
+      return;
+    }
+    Quagga.start();
+  });
 
   Quagga.onDetected((data) => {
-    if (data.codeResult && data.codeResult.code) {
+    if (data && data.codeResult && data.codeResult.code) {
       const barcode = data.codeResult.code;
       document.getElementById("barcode").value = barcode;
       Quagga.stop();
-      scannerContainer.style.display = "none";
+      container.style.display = "none";
       showStatus("Barcode berhasil dipindai");
     }
   });
