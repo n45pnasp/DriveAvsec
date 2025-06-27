@@ -24,7 +24,9 @@ function showStatus(msg, success = true) {
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat("id-ID", {
-    style: "currency", currency: "IDR", minimumFractionDigits: 0
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
   }).format(amount);
 }
 
@@ -42,10 +44,11 @@ async function loadProducts() {
 function displayProducts(data) {
   const list = document.getElementById("productList");
   list.innerHTML = "";
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     list.innerHTML = `<tr><td colspan="5">Tidak ada data</td></tr>`;
     return;
   }
+
   data.forEach(p => {
     list.innerHTML += `
       <tr>
@@ -62,11 +65,20 @@ function displayProducts(data) {
 }
 
 function searchProducts() {
-  const term = document.getElementById("search").value.toLowerCase();
-  const filtered = products.filter(p =>
-    (p.Barcode || p.barcode || '').toLowerCase().includes(term) ||
-    (p["Nama Produk"] || p.productName || '').toLowerCase().includes(term)
-  );
+  const term = document.getElementById("search").value.trim().toLowerCase();
+
+  // Pastikan term ada
+  if (!term) {
+    displayProducts(products); // jika kosong, tampilkan semua
+    return;
+  }
+
+  const filtered = products.filter(p => {
+    const barcode = (p.Barcode || p.barcode || "").toString().toLowerCase();
+    const nama = (p["Nama Produk"] || p.productName || "").toString().toLowerCase();
+    return barcode.includes(term) || nama.includes(term);
+  });
+
   displayProducts(filtered);
 }
 
