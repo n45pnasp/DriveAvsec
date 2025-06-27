@@ -93,8 +93,8 @@ async function printReceipt() {
   let y = 10;
 
   if (logo) {
-    doc.addImage(logo, 'PNG', 80, y, 80, 20);
-    y += 25;
+    doc.addImage(logo, 'PNG', 80, y, 20, 20);
+    y += 30;
   }
 
   doc.setFontSize(14);
