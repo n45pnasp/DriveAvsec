@@ -24,6 +24,14 @@
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
     th { background-color: #f0f0f0; }
+
+    /* Tombol wrapper */
+    .button-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -59,8 +67,11 @@
         <input type="number" id="price" />
       </div>
 
-      <button id="saveBtn" class="btn btn-primary">Simpan Produk</button>
-      <span id="saveSpinner" class="loading">⏳</span>
+      <div class="button-actions">
+        <button id="saveBtn" class="btn btn-primary">Simpan Produk</button>
+        <a href="kasir.html" class="btn btn-secondary">Ke Halaman Kasir</a>
+        <span id="saveSpinner" class="loading">⏳</span>
+      </div>
     </div>
 
     <div class="card">
