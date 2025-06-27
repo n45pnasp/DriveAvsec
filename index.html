@@ -6,6 +6,7 @@
   <title>Alat Cek Produk</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    /* Tambahan gaya minimal supaya bisa langsung jalan jika style.css belum dibuat */
     body { font-family: sans-serif; margin: 0; padding: 0; background: #f2f2f2; }
     .container { padding: 20px; }
     .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
@@ -70,13 +71,7 @@
     <div class="card">
       <div class="form-group">
         <label for="search">Cari Produk:</label>
-        <div class="input-with-button">
-          <input type="text" id="search" placeholder="Cari berdasarkan barcode atau nama" />
-          <button class="btn btn-secondary" id="btn-search-scan">Scan</button>
-        </div>
-        <div id="scanner-search-container" style="display:none; width:100%; max-width:400px; margin-top:10px;">
-          <div id="interactive-search" class="viewport"></div>
-        </div>
+        <input type="text" id="search" oninput="searchProducts()" placeholder="Cari berdasarkan barcode atau nama" />
       </div>
       <table>
         <thead>
@@ -93,6 +88,7 @@
     </div>
   </main>
 
+  <!-- Library QuaggaJS -->
   <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
   <script src="app.js"></script>
 </body>
