@@ -38,7 +38,7 @@ header {
 
 .search-box {
   width: 100%;
-  max-width: 400px; /* batas maksimal */
+  max-width: 300px; /* batas maksimal */
   padding: 8px;
   margin-bottom: 10px;
   font-size: 16px;
