@@ -36,6 +36,16 @@ header {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
+.search-box {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+
 /* Produk & Keranjang */
 ul {
   list-style: none;
