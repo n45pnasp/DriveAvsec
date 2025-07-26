@@ -8,7 +8,7 @@ async function loadProducts() {
     const data = await res.json();
     if (Array.isArray(data)) {
       products = data;
-      displayProducts();
+      displayProducts(); // tampilkan semua saat awal
     } else {
       alert("Data produk tidak valid");
     }
@@ -17,11 +17,15 @@ async function loadProducts() {
   }
 }
 
-function displayProducts() {
+function displayProducts(filterText = '') {
   const list = document.getElementById("productList");
   list.innerHTML = "";
 
-  products.forEach(p => {
+  const filtered = products.filter(p => 
+    p["Nama Produk"]?.toLowerCase().includes(filterText.toLowerCase())
+  );
+
+  filtered.forEach(p => {
     const li = document.createElement("li");
     li.className = "product-item";
     li.innerHTML = `
@@ -84,36 +88,31 @@ async function printReceipt() {
 
   const { jsPDF } = window.jspdf;
 
-  // 58mm x 200mm (thermal paper size), unit: mm
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: [58, 200] // panjang akan menyesuaikan isi
+    format: [58, 200]
   });
 
   const pageWidth = 58;
   let y = 5;
 
-  // Tambahkan logo di tengah
-  const logo = await loadImageAsBase64("logo.png"); // Ganti dengan path logo kamu
+  const logo = await loadImageAsBase64("logo.png");
   if (logo) {
-    const logoWidth = 30; // kecilkan agar pas
+    const logoWidth = 30;
     const logoX = (pageWidth - logoWidth) / 2;
-    doc.addImage(logo, 'PNG', logoX, y, logoWidth, logoWidth); // square
+    doc.addImage(logo, 'PNG', logoX, y, logoWidth, logoWidth);
     y += logoWidth + 3;
   }
 
-  // Nama toko di tengah
   doc.setFontSize(10);
   doc.text("TOKO BELANJA BULANAN", pageWidth / 2, y, { align: 'center' });
   y += 6;
 
-  // Tanggal
   doc.setFontSize(8);
   doc.text(`Tanggal: ${new Date().toLocaleString()}`, 2, y);
   y += 5;
 
-  // Isi produk
   doc.setFontSize(8);
   cart.forEach(item => {
     doc.text(`${item.name} x${item.qty}`, 2, y);
@@ -121,7 +120,6 @@ async function printReceipt() {
     y += 4;
   });
 
-  // Total
   y += 2;
   doc.setFontSize(9);
   doc.text("__________________________", pageWidth / 2, y, { align: 'center' });
@@ -170,5 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCetak = document.getElementById("btn-print-pdf");
   if (btnCetak) {
     btnCetak.addEventListener("click", printReceipt);
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      displayProducts(searchInput.value);
+    });
   }
 });
