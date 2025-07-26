@@ -8,7 +8,7 @@ async function loadProducts() {
     const data = await res.json();
     if (Array.isArray(data)) {
       products = data;
-      displayProducts(); // tampilkan semua saat awal
+      displayProducts();
     } else {
       alert("Data produk tidak valid");
     }
@@ -21,7 +21,7 @@ function displayProducts(filterText = '') {
   const list = document.getElementById("productList");
   list.innerHTML = "";
 
-  const filtered = products.filter(p => 
+  const filtered = products.filter(p =>
     p["Nama Produk"]?.toLowerCase().includes(filterText.toLowerCase())
   );
 
@@ -33,7 +33,7 @@ function displayProducts(filterText = '') {
         <strong>${p["Nama Produk"]}</strong><br>
         <small>Rp ${Number(p.Harga || 0).toLocaleString()}</small>
       </div>
-      <button class="btn btn-add" 
+      <button class="btn btn-add"
         data-barcode="${encodeURIComponent(p.Barcode)}"
         data-name="${p["Nama Produk"]}"
         data-price="${p.Harga}">Tambah</button>
@@ -51,18 +51,59 @@ function renderCart() {
 
   cart.forEach((item, index) => {
     total += item.qty * item.price;
+
     const li = document.createElement("li");
     li.className = "cart-item";
     li.innerHTML = `
-      <span>${item.name} × ${item.qty} = Rp ${Number(item.qty * item.price).toLocaleString()}</span>
-      <div class="qty-actions">
-        <button class="btn btn-small btn-minus" data-index="${index}">−</button>
+      <div class="cart-row">
+        <button class="btn-remove" data-index="${index}">×</button>
+        <div class="cart-info">
+          <div class="cart-title">${item.name}</div>
+          <div class="cart-sub">Rp ${item.price.toLocaleString()}</div>
+        </div>
+        <div class="cart-controls">
+          <button class="btn btn-qty btn-minus" data-index="${index}">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="btn btn-qty btn-plus" data-index="${index}">+</button>
+        </div>
+        <div class="cart-price">Rp ${(item.qty * item.price).toLocaleString()}</div>
       </div>
     `;
     list.appendChild(li);
   });
 
   totalEl.textContent = `Total: Rp ${total.toLocaleString()}`;
+  attachCartEvents();
+}
+
+function attachCartEvents() {
+  document.querySelectorAll('.btn-plus').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const index = parseInt(e.target.dataset.index);
+      cart[index].qty++;
+      renderCart();
+    });
+  });
+
+  document.querySelectorAll('.btn-minus').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const index = parseInt(e.target.dataset.index);
+      if (cart[index].qty > 1) {
+        cart[index].qty--;
+      } else {
+        cart.splice(index, 1);
+      }
+      renderCart();
+    });
+  });
+
+  document.querySelectorAll('.btn-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const index = parseInt(e.target.dataset.index);
+      cart.splice(index, 1);
+      renderCart();
+    });
+  });
 }
 
 async function loadImageAsBase64(url) {
@@ -151,29 +192,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.getElementById("cartList").addEventListener("click", e => {
-    if (e.target.classList.contains("btn-minus")) {
-      const index = parseInt(e.target.dataset.index);
-      if (!isNaN(index) && cart[index]) {
-        if (cart[index].qty > 1) {
-          cart[index].qty--;
-        } else {
-          cart.splice(index, 1);
-        }
-        renderCart();
-      }
-    }
+  document.getElementById("searchInput").addEventListener("input", e => {
+    displayProducts(e.target.value);
   });
 
-  const btnCetak = document.getElementById("btn-print-pdf");
-  if (btnCetak) {
-    btnCetak.addEventListener("click", printReceipt);
-  }
-
-  const searchInput = document.getElementById("searchInput");
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      displayProducts(searchInput.value);
-    });
-  }
+  document.getElementById("btn-print-pdf").addEventListener("click", printReceipt);
 });
