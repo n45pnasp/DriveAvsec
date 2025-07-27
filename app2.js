@@ -132,60 +132,88 @@ async function printReceipt() {
   }
 
   const { jsPDF } = window.jspdf;
-
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: [58, 200]
   });
 
-  const pageWidth = 58;
   let y = 5;
+  const pageWidth = 58;
 
+  // Logo (jika tersedia)
   const logo = await loadImageAsBase64("logo.png");
   if (logo) {
-    const logoWidth = 30;
+    const logoWidth = 20;
     const logoX = (pageWidth - logoWidth) / 2;
     doc.addImage(logo, 'PNG', logoX, y, logoWidth, logoWidth);
-    y += logoWidth + 3;
+    y += logoWidth + 2;
   }
 
-  doc.setFontSize(10);
+  doc.setFont('courier', 'normal');
+  doc.setFontSize(9);
   doc.text("TOKO BELANJA BULANAN", pageWidth / 2, y, { align: 'center' });
-  y += 6;
+  y += 4;
 
-  doc.setFontSize(8);
+  doc.setFontSize(7);
+  doc.text(`Jl. Gunung Anyar, Surabaya`, pageWidth / 2, y, { align: 'center' });
+  y += 4;
+  doc.text(`Telp. 081234567890`, pageWidth / 2, y, { align: 'center' });
+  y += 4;
+
+  doc.setLineWidth(0.2);
+  doc.line(2, y, pageWidth - 2, y);
+  y += 2;
+
   doc.text(`Tanggal: ${new Date().toLocaleString()}`, 2, y);
-  y += 5;
+  y += 4;
 
-  cart.forEach(item => {
-    doc.text(`${item.name} x${item.qty}`, 2, y);
-    doc.text(`Rp ${(item.qty * item.price).toLocaleString()}`, pageWidth - 2, y, { align: 'right' });
-    y += 4;
+  // Gunakan autoTable
+  const tableData = cart.map(item => [
+    `${item.name} x${item.qty}`,
+    `Rp ${(item.qty * item.price).toLocaleString()}`
+  ]);
+
+  doc.autoTable({
+    startY: y,
+    head: [['Item', 'Total']],
+    body: tableData,
+    styles: {
+      fontSize: 7,
+      font: 'courier',
+      cellPadding: 1
+    },
+    theme: 'plain',
+    columnStyles: {
+      0: { halign: 'left' },
+      1: { halign: 'right' }
+    },
+    margin: { left: 2, right: 2 }
   });
 
-  y += 2;
-  doc.setFontSize(9);
-  doc.text("__________________________", pageWidth / 2, y, { align: 'center' });
-  y += 5;
+  y = doc.autoTable.previous.finalY + 2;
+  doc.line(2, y, pageWidth - 2, y);
+  y += 4;
+
   const total = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.text(`Total: Rp ${total.toLocaleString()}`, pageWidth - 2, y, { align: 'right' });
 
-  doc.save("struk-belanja.pdf");
+  y += 6;
+  doc.setFontSize(7);
+  doc.text("Terima kasih telah berbelanja!", pageWidth / 2, y, { align: 'center' });
+  y += 3;
+  doc.text("olshopin.com/t/114848", pageWidth / 2, y, { align: 'center' });
 
-  // ✅ Tampilkan notifikasi toast
-  showToast("✅ Struk berhasil diunduh sebagai PDF!");
+  doc.save("struk-belanja.pdf");
+  showToast("✅ Struk berhasil diunduh!");
 }
 
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
   toast.classList.add("show");
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 3000);
+  setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -203,7 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         cart.push({ barcode, name, price, qty: 1 });
       }
-
       renderCart();
     }
   });
