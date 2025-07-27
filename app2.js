@@ -55,19 +55,23 @@ function renderCart() {
     const li = document.createElement("li");
     li.className = "cart-item";
     li.innerHTML = `
-      <div class="cart-row">
-        <button class="btn-remove" data-index="${index}">×</button>
+      <div class="cart-left">
+        <img class="cart-img" src="https://via.placeholder.com/60" alt="img">
         <div class="cart-info">
-          <div class="cart-title">${item.name}</div>
-          <div class="cart-sub">Rp ${item.price.toLocaleString()}</div>
+          <div class="cart-name">${item.name}</div>
+          <div class="cart-price">Rp ${item.price.toLocaleString()}</div>
         </div>
-        <div class="cart-controls">
-          <button class="btn btn-qty btn-minus" data-index="${index}">−</button>
-          <span class="qty-num">${item.qty}</span>
-          <button class="btn btn-qty btn-plus" data-index="${index}">+</button>
-        </div>
-        <div class="cart-price">Rp ${(item.qty * item.price).toLocaleString()}</div>
       </div>
+
+      <div class="cart-controls">
+        <button class="btn-small btn-minus" data-index="${index}">−</button>
+        <span>${item.qty}</span>
+        <button class="btn-small btn-plus" data-index="${index}">+</button>
+      </div>
+
+      <div class="cart-amount">Rp ${(item.qty * item.price).toLocaleString()}</div>
+
+      <button class="remove-btn" data-index="${index}">×</button>
     `;
     list.appendChild(li);
   });
@@ -97,7 +101,7 @@ function attachCartEvents() {
     });
   });
 
-  document.querySelectorAll('.btn-remove').forEach(btn => {
+  document.querySelectorAll('.remove-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       const index = parseInt(e.target.dataset.index);
       cart.splice(index, 1);
@@ -198,5 +202,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-print-pdf").addEventListener("click", printReceipt);
 });
-
-
