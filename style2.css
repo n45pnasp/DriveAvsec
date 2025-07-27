@@ -186,13 +186,13 @@ ul {
   border-radius: 12px;
   font-size: 16px;
   cursor: pointer;
+  text-align: center;
 }
 
 .btn-primary {
   background-color: #00AEEF;
   color: white;
   margin-top: 20px;
-  float: right;
 }
 
 .btn-primary:hover {
@@ -203,10 +203,49 @@ ul {
   background-color: #ddd;
   color: black;
   text-decoration: none;
-  margin-top: 40px;
-  display: inline-block;
   padding: 10px 18px;
   border-radius: 8px;
+  font-size: 16px;
+}
+
+/* ===== Row Tombol Aksi (Cetak & Kembali) ===== */
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.button-row .btn {
+  flex: 1;
+  margin: 0;
+}
+
+/* ===== Toast Notification ===== */
+.toast {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #4CAF50;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  padding: 12px 16px;
+  position: fixed;
+  z-index: 9999;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.5s ease, bottom 0.5s ease;
+}
+
+.toast.show {
+  visibility: visible;
+  opacity: 1;
+  bottom: 50px;
 }
 
 /* ===== Responsive ===== */
@@ -228,41 +267,4 @@ ul {
   #cartTotal {
     text-align: left;
   }
-
-  .button-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-  }
-  
-  .button-row .btn {
-    flex: 1;
-    text-align: center;
-  }
-
-  .toast {
-  visibility: hidden;
-  min-width: 250px;
-  background-color: #4CAF50;
-  color: white;
-  text-align: center;
-  border-radius: 8px;
-  padding: 12px 16px;
-  position: fixed;
-  z-index: 9999;
-  left: 50%;
-  bottom: 30px;
-  transform: translateX(-50%);
-  font-size: 16px;
-  opacity: 0;
-  transition: opacity 0.5s ease, bottom 0.5s ease;
-  }
-  
-  .toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-  }
-
 }
