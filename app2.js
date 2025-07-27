@@ -179,7 +179,7 @@ async function printReceipt() {
     head: [['Item', 'Total']],
     body: tableData,
     styles: {
-      fontSize: 7,
+      fontSize: 6,
       font: 'courier',
       cellPadding: 1
     },
