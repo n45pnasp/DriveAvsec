@@ -158,7 +158,6 @@ async function printReceipt() {
   doc.text(`Tanggal: ${new Date().toLocaleString()}`, 2, y);
   y += 5;
 
-  doc.setFontSize(8);
   cart.forEach(item => {
     doc.text(`${item.name} x${item.qty}`, 2, y);
     doc.text(`Rp ${(item.qty * item.price).toLocaleString()}`, pageWidth - 2, y, { align: 'right' });
@@ -174,6 +173,19 @@ async function printReceipt() {
   doc.text(`Total: Rp ${total.toLocaleString()}`, pageWidth - 2, y, { align: 'right' });
 
   doc.save("struk-belanja.pdf");
+
+  // ✅ Tampilkan notifikasi toast
+  showToast("✅ Struk berhasil diunduh sebagai PDF!");
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
