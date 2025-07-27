@@ -22,20 +22,20 @@ h1 {
 /* ===== Kartu / Card ===== */
 .card {
   background-color: white;
-  border-radius: 10px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 25px 30px;
   margin-bottom: 30px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
 }
 
 /* ===== Pencarian ===== */
 .search-box {
   width: 100%;
   max-width: 100%;
-  padding: 10px 14px;
+  padding: 12px 16px;
   margin-bottom: 20px;
   font-size: 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid #ccc;
 }
 
@@ -63,29 +63,29 @@ ul {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  background: #f9f9f9;
+  padding: 16px 20px;
+  border-radius: 15px;
   margin-bottom: 15px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 .cart-left {
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 2;
+  gap: 15px;
 }
 
 .cart-img {
   width: 60px;
   height: 60px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 12px;
   background-color: #eee;
 }
 
 .cart-info {
-  margin-left: 15px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -110,49 +110,64 @@ ul {
 .cart-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
 }
 
 .btn-small {
-  padding: 6px 12px;
-  font-size: 14px;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  font-weight: bold;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .btn-minus {
-  background-color: #f44336;
+  background-color: orange;
   color: white;
 }
 
 .btn-plus {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: orange;
+  color: white;
 }
 
-.btn-minus:hover {
-  background-color: #d32f2f;
-}
-
+.btn-minus:hover,
 .btn-plus:hover {
-  background-color: #c7c7c7;
+  background-color: #e69500;
+}
+
+/* ===== Amount (Total per produk) ===== */
+.cart-amount {
+  flex: 1;
+  text-align: right;
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
 }
 
 /* ===== Hapus (X) Button ===== */
 .remove-btn {
+  background-color: red;
+  color: white;
   border: none;
-  background: none;
-  font-size: 20px;
-  color: #ccc;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 32px;
+  text-align: center;
   cursor: pointer;
-  margin-right: 10px;
-  transition: color 0.2s;
+  transition: background 0.2s;
 }
 
 .remove-btn:hover {
-  color: red;
+  background-color: darkred;
 }
 
 /* ===== Total ===== */
@@ -161,6 +176,37 @@ ul {
   font-weight: bold;
   text-align: right;
   margin-top: 20px;
+}
+
+/* ===== Button Utama & Kembali ===== */
+.btn {
+  display: inline-block;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #00AEEF;
+  color: white;
+  margin-top: 20px;
+  float: right;
+}
+
+.btn-primary:hover {
+  background-color: #0095d6;
+}
+
+.btn-secondary {
+  background-color: #ddd;
+  color: black;
+  text-decoration: none;
+  margin-top: 40px;
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 8px;
 }
 
 /* ===== Responsive ===== */
