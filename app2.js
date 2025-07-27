@@ -156,9 +156,9 @@ async function printReceipt() {
   y += 4;
 
   doc.setFontSize(7);
-  doc.text(`Jl. Gunung Anyar, Surabaya`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Jl. Doho No.13, Banyuwangi`, pageWidth / 2, y, { align: 'center' });
   y += 4;
-  doc.text(`Telp. 081234567890`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Telp. 082183869994`, pageWidth / 2, y, { align: 'center' });
   y += 4;
 
   doc.setLineWidth(0.2);
@@ -203,7 +203,7 @@ async function printReceipt() {
   doc.setFontSize(7);
   doc.text("Terima kasih telah berbelanja!", pageWidth / 2, y, { align: 'center' });
   y += 3;
-  doc.text("olshopin.com/t/114848", pageWidth / 2, y, { align: 'center' });
+  doc.text("n45pnasp.com/n/454545", pageWidth / 2, y, { align: 'center' });
 
   doc.save("struk-belanja.pdf");
   showToast("✅ Struk berhasil diunduh!");
