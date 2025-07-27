@@ -10,29 +10,35 @@
   <div class="container">
     <h1>Kasir Produk</h1>
 
+    <!-- Kartu Produk -->
     <div class="card">
       <h2>Daftar Produk</h2>
       <input type="text" id="searchInput" placeholder="Cari produk..." class="search-box"/>
       <ul id="productList"></ul>
     </div>
 
-<div class="card">
-  <h2>Keranjang Belanja</h2>
-  <ul id="cartList"></ul>
-  <div id="cartTotal">Total: Rp 0</div>
+    <!-- Kartu Keranjang -->
+    <div class="card">
+      <h2>Keranjang Belanja</h2>
+      <ul id="cartList"></ul>
+      <div id="cartTotal">Total: Rp 0</div>
 
-  <div class="button-row">
-    <button class="btn btn-primary" id="btn-print-pdf">Cetak Struk PDF</button>
-    <a href="index.html" class="btn btn-secondary">Kembali ke Data Produk</a>
+      <!-- Tombol aksi -->
+      <div class="button-row">
+        <button class="btn btn-primary" id="btn-print-pdf">Cetak Struk PDF</button>
+        <a href="index.html" class="btn btn-secondary">Kembali ke Data Produk</a>
+      </div>
+    </div>
   </div>
-</div>
+
+  <!-- Notifikasi -->
+  <div id="toast" class="toast"></div>
 
   <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- Script utama -->
   <script src="app2.js"></script>
-    
-  <div id="toast" class="toast">Struk berhasil diunduh</div>
 </body>
 </html>
