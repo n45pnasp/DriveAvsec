@@ -228,4 +228,16 @@ ul {
   #cartTotal {
     text-align: left;
   }
+
+  .button-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  }
+  
+  .button-row .btn {
+    flex: 1;
+    text-align: center;
+  }
 }
