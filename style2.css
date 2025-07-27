@@ -36,17 +36,16 @@ header {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
+/* Search Box */
 .search-box {
   width: 100%;
-  max-width: 80%; /* batas maksimal */
+  max-width: 90%; /* Lebar maksimal lebih kecil agar tidak kepanjangan */
   padding: 8px;
   margin-bottom: 10px;
   font-size: 16px;
   border-radius: 8px;
   border: 1px solid #ccc;
 }
-
-
 
 /* Produk & Keranjang */
 ul {
@@ -69,9 +68,47 @@ ul {
   border-bottom: none;
 }
 
+/* Gaya Shopping Bag untuk Cart Item */
+.cart-item {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+}
+
+.cart-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  background-color: #f0f0f0;
+}
+
+.cart-details {
+  flex-grow: 1;
+}
+
+.cart-details h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.cart-details p {
+  margin: 2px 0;
+  font-size: 14px;
+  color: #777;
+}
+
 .qty-actions {
   display: flex;
-  gap: 5px;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Tombol */
@@ -169,5 +206,15 @@ ul {
 
   #cartTotal {
     text-align: left;
+  }
+
+  .cart-image {
+    width: 100%;
+    height: auto;
+  }
+
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
