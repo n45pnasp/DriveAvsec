@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>OCR Transaksi — Livin & Jenius (UI Livin, 2 Mode)</title>
+<style>
+  :root{ --bg:#0b1220; --card:#0f172a; --muted:#9fb3c9; --text:#e5e7eb; --accent:#06b6d4; --line:#1e3a5f; }
+  *{box-sizing:border-box;font-family:system-ui,Segoe UI,Roboto,Inter,sans-serif}
+  body{margin:0;background:linear-gradient(180deg,#091220,#0b1220);color:var(--text)}
+  .wrap{max-width:1080px;margin:auto;padding:18px}
+  h1{font-size:18px;margin:.2rem 0 1rem}
+  .grid{display:grid;gap:14px}
+  @media(min-width:960px){.grid{grid-template-columns:440px 1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .muted{color:var(--muted);font-size:13px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .btn{appearance:none;border:0;border-radius:12px;background:var(--accent);color:#021319;font-weight:700;padding:10px 12px;cursor:pointer}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .btn.out{background:#0b1a2c;color:#dbeafe;border:1px solid #1f3d5f}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;background:#0b1a2c;border:1px solid #1a3a5b;color:#9ec7e8}
+  select{background:#0b1a2c;border:1px solid #1f3d5f;color:#cfe6ff;border-radius:10px;padding:10px}
+  progress{width:100%;height:8px}
+  canvas{width:100%;max-height:58vh;background:#050b13;border-radius:12px;border:1px solid #16324d}
+  table{width:100%;border-collapse:separate;border-spacing:0 8px}
+  th,td{font-size:14px}
+  th{color:#9fc7e4;text-align:left;font-weight:600}
+  td{background:#0b1a2c;border:1px solid #173a59;padding:8px 10px}
+  td:first-child{border-radius:10px 0 0 10px}
+  td:last-child{border-radius:0 10px 10px 0}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .small{font-size:12px}
+  dialog{border:1px solid var(--line);background:#0f172a;color:var(--text);border-radius:12px;padding:14px;max-width:640px;width:92%}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  textarea{width:100%;min-height:160px;background:#0b1a2c;border:1px solid #173a59;color:#dbeafe;border-radius:10px;padding:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>OCR Transaksi — 3 Kolom (UI Livin, Mode: Livin/Jenius)</h1>
+  <div class="grid">
+    <!-- Kiri -->
+    <div class="card">
+      <div class="row" style="margin-bottom:8px">
+        <span class="badge">Pilih Mode</span>
+        <select id="mode">
+          <option value="livin">Livin (default)</option>
+          <option value="jenius">Jenius</option>
+        </select>
+        <span id="hint" class="badge">Pilih gambar → OCR</span>
+      </div>
+
+      <div class="muted" style="margin-bottom:8px">
+        Pilih screenshot daftar transaksi. Mode <b>Livin</b> (BW kontras untuk daftar) & <b>Jenius</b> (warna asli dipertajam).
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="pickBtn" class="btn" type="button">Pilih dari File Manager</button>
+        <button id="ocrBtn" class="btn" disabled>Jalankan OCR</button>
+        <button id="clearBtn" class="btn out" type="button">Bersihkan</button>
+      </div>
+      <div style="margin:10px 0">
+        <progress id="prog" max="1" value="0"></progress>
+        <div id="stat" class="muted small" style="margin-top:6px">Menunggu file…</div>
+      </div>
+      <canvas id="canvas"></canvas>
+      <details style="margin-top:8px">
+        <summary class="muted">Teks mentah (debug)</summary>
+        <pre id="raw" class="mono muted" style="white-space:pre-wrap"></pre>
+      </details>
+    </div>
+
+    <!-- Kanan -->
+    <div class="card">
+      <div class="row">
+        <div class="badge">Hasil (centang untuk disalin)</div>
+        <div class="row" style="margin-left:auto">
+          <button id="selAll" class="btn out small" type="button">Pilih Semua</button>
+          <button id="copyCsv" class="btn small" type="button">Salin CSV</button>
+          <button id="copyJson" class="btn small" type="button">Salin JSON</button>
+        </div>
+      </div>
+      <div class="muted small" style="margin:8px 0">Kolom: Tanggal | Keterangan | Nilai (Rp)</div>
+      <div style="overflow:auto; max-height:64vh">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="masterCheck"/></th>
+              <th>Tanggal</th>
+              <th>Keterangan</th>
+              <th>Nilai (Rp)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup copy -->
+<dialog id="copyDlg">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <div class="badge">Clipboard tidak tersedia — salin manual (file juga diunduh)</div>
+    <button id="dlgClose" class="btn out small" type="button">Tutup</button>
+  </div>
+  <textarea id="dlgText"></textarea>
+</dialog>
+
+<!-- Tesseract -->
+<script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+
+<script>
+/* ====== UTIL & UI GENERIK ====== */
+const $ = s => document.querySelector(s);
+const pickBtn = $('#pickBtn'), ocrBtn = $('#ocrBtn'), clearBtn = $('#clearBtn');
+const modeSel = $('#mode'), hint = $('#hint');
+const canvas = $('#canvas'); const ctx = canvas.getContext('2d', { willReadFrequently:true });
+const prog = $('#prog'), stat = $('#stat'), rawOut = $('#raw');
+const tbody = $('#tbody'), masterCheck = $('#masterCheck');
+const selAllBtn = $('#selAll'), copyCsvBtn = $('#copyCsv'), copyJsonBtn = $('#copyJson');
+const copyDlg = $('#copyDlg'), dlgText = $('#dlgText'), dlgClose = $('#dlgClose');
+
+let currentFile = null;
+let rowsOut = [];
+let active = null; // akan di-set sesuai dropdown
+
+function renderTable(){
+  tbody.innerHTML = '';
+  rowsOut.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td style="width:36px;text-align:center"><input type="checkbox" class="rowCheck" data-i="${i}" checked></td>
+      <td>${r.date||'—'}</td>
+      <td>${escapeHtml(r.desc||'—')}</td>
+      <td class="mono">${r.amount||'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function selectedRows(){
+  const idx=[...document.querySelectorAll('.rowCheck')].map((cb,i)=>cb.checked?i:-1).filter(i=>i>=0);
+  return idx.map(i=>rowsOut[i]);
+}
+function buildCSV(rows){
+  const hdr='tanggal,keterangan,nilai';
+  const body=rows.map(r=>[
+    r.date||'',
+    /[,"]/.test(r.desc||'')?`"${(r.desc||'').replace(/"/g,'""')}"`:(r.desc||''),
+    r.amount||''
+  ].join(',')).join('\n');
+  return `${hdr}\n${body}`;
+}
+async function doCopy(fmt){
+  const rows=selectedRows(); if(!rows.length){ stat.textContent='Tidak ada baris terpilih.'; return; }
+  const text=fmt==='csv'?buildCSV(rows):JSON.stringify(rows,null,2);
+  const filename=fmt==='csv'?'transaksi.csv':'transaksi.json';
+  const mime=fmt==='csv'?'text/csv':'application/json';
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      stat.textContent=`${fmt.toUpperCase()} tersalin ke clipboard.`; return;
+    }
+    throw 0;
+  }catch(_){
+    try{
+      const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+      ta.style.position='fixed'; ta.style.opacity='0'; ta.select(); ta.setSelectionRange(0,999999);
+      const ok=document.execCommand('copy'); document.body.removeChild(ta);
+      if(ok){ stat.textContent=`${fmt.toUpperCase()} tersalin (fallback).`; return; }
+      throw 0;
+    }catch(_){
+      const blob=new Blob([text],{type:mime}); const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },0);
+      dlgText.value=text; copyDlg.showModal(); dlgText.focus(); dlgText.select();
+      stat.textContent=`${fmt.toUpperCase()} diunduh (clipboard tidak tersedia).`;
+    }
+  }
+}
+dlgClose.addEventListener('click', ()=>copyDlg.close());
+selAllBtn.addEventListener('click', ()=>{ document.querySelectorAll('.rowCheck').forEach(cb=>cb.checked=true); });
+masterCheck.addEventListener('change', e=>{ document.querySelectorAll('.rowCheck').forEach(cb=>cb.checked=e.target.checked); });
+copyCsvBtn.addEventListener('click', ()=>doCopy('csv'));
+copyJsonBtn.addEventListener('click', ()=>doCopy('json'));
+clearBtn.addEventListener('click', ()=>{ rowsOut=[]; renderTable(); rawOut.textContent=''; canvas.width=10; canvas.height=10; prog.value=0; stat.textContent='Dibersihkan.'; ocrBtn.disabled=true; });
+
+pickBtn.addEventListener('click', async ()=>{
+  try{
+    if(!window.showOpenFilePicker){
+      alert('Browser ini tidak mendukung File Picker modern. Coba Chrome/Edge terbaru.');
+      return;
+    }
+    const [h] = await window.showOpenFilePicker({multiple:false, types:[{description:'Gambar', accept:{'image/*':['.png','.jpg','.jpeg','.webp']}}]});
+    currentFile = await h.getFile();
+    if(currentFile){ active.preview(currentFile); ocrBtn.disabled=false; stat.textContent='Siap OCR'; }
+  }catch(e){}
+});
+
+ocrBtn.addEventListener('click', async ()=>{
+  if(!currentFile) return;
+  ocrBtn.disabled = true; prog.value = 0.01; stat.textContent='Menjalankan OCR…';
+  try{
+    rowsOut = await active.run(currentFile);
+    renderTable();
+    stat.textContent = `Selesai. ${rowsOut.length} baris.`;
+  }catch(e){
+    console.error(e);
+    stat.textContent = 'Terjadi kesalahan OCR.';
+  }finally{
+    ocrBtn.disabled = false;
+  }
+});
+
+/* ====== ENGINE LIVIN (BW kontras; parsing uppercase di kiri Rp; tanggal di sekitar baris) ====== */
+const ModeLivin = (function(){
+  const RE_DATE_ANY=/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+(\d{4})\b/i;
+  const RE_DATE_ROW=/^\s*\d{1,2}\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+\d{4}\s*$/i;
+  const RE_AMT_RP=/(Rp|RP)\s*\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})?/;
+
+  function normDate(s){
+    const map={jan:1,feb:2,mar:3,apr:4,mei:5,jun:6,jul:7,agu:8,sep:9,okt:10,nov:11,des:12};
+    const [d,mon,y]=s.trim().split(/\s+/);
+    const mo=String(map[mon.slice(0,3).toLowerCase()]||1).padStart(2,'0');
+    return `${y}-${mo}-${String(d).padStart(2,'0')}`;
+  }
+  function extractAmount(s){
+    const m=s.match(/(Rp|RP)\s*(\d{1,3}(?:[.\s]\d{3})+|\d+)(?:,(\d{2}))?/);
+    if(!m) return '';
+    let num=(m[2]||'').replace(/[.\s]/g,''); if(m[3]) num+='.'+m[3];
+    const n=parseFloat(num);
+    return 'Rp '+n.toLocaleString('id-ID',{maximumFractionDigits:2});
+  }
+  function median(a){ const b=[...a].sort((x,y)=>x-y); const i=Math.floor(b.length/2); return b.length%2?b[i]:(b[i-1]+b[i])/2; }
+  function topUppercase(s){
+    const toks=s.replace(RE_DATE_ANY,'').split(/\s+/).filter(Boolean);
+    let best='', cur=[];
+    for(const tk of toks){
+      cur.push(tk);
+      const seg=cur.join(' ');
+      const letters=(seg.match(/[A-Za-z]/g)||[]).length, upp=(seg.match(/[A-Z]/g)||[]).length;
+      const isUpper = letters>0 && upp/letters>=0.6;
+      if(isUpper){ if(seg.length>best.length) best=seg; }
+      else { cur=[tk]; const l=(tk.match(/[A-Za-z]/g)||[]).length, u=(tk.match(/[A-Z]/g)||[]).length; if(l>0 && u/l>=0.6 && tk.length>best.length) best=tk; }
+    }
+    return best.trim();
+  }
+  function pickUppercaseLeft(row){
+    const idxRp=row.ws.findIndex(w=>/^(Rp|RP)$/.test(w.t)||/^Rp/i.test(w.t));
+    const left=(idxRp>=0?row.ws.slice(0,idxRp):row.ws).map(w=>w.t).join(' ');
+    return topUppercase(left);
+  }
+  function cleanDesc(s){
+    if(!s) return s;
+    return s
+      .replace(RE_DATE_ANY,'')
+      .replace(/^(?:[@*•◦▪·–—\-_|]+|\s+)*(?:Oo|0o|o0|OO)\s+/i,'')
+      .replace(/^(?:[@*•◦▪·–—\-_|]+\s*)+/i,'')
+      .replace(/\.{2,}$/,'').replace(/\.{2,}/g,' ')
+      .replace(/[|<>`"]/g,'')
+      .replace(/\s{2,}/g,' ')
+      .trim();
+  }
+  function findDateNearby(R,i){
+    for(let k=0;k<4;k++){
+      const s=R[i+k]?.text||'';
+      const m=s.match(RE_DATE_ANY);
+      if(m) return normDate(`${m[1]} ${m[2]} ${m[3]}`);
+    }
+    return '';
+  }
+
+  function preview(file){
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = 2;
+      const w = Math.round(img.naturalWidth * scale);
+      const h = Math.round(img.naturalHeight * scale);
+      canvas.width = w; canvas.height = h;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 0, 0, w, h);
+      const id = ctx.getImageData(0,0,w,h), d=id.data;
+      const contrast = 1.7, threshold = 140;
+      for (let i=0;i<d.length;i+=4){
+        const r=d[i], g=d[i+1], b=d[i+2];
+        let y = 0.299*r + 0.587*g + 0.114*b;
+        y = (((y/255 - .5)*contrast)+.5)*255;
+        const v = y>threshold ? 255 : 0;
+        d[i]=d[i+1]=d[i+2]=v;
+      }
+      ctx.putImageData(id,0,0);
+    };
+    img.src = URL.createObjectURL(file);
+  }
+
+  function extractRowsLivin(data){
+    const words=(data.words||[]).filter(w=>(w.text||'').trim()).map(w=>({
+      t:w.text.trim(), x0:w.bbox.x0, x1:w.bbox.x1, y0:w.bbox.y0, y1:w.bbox.y1,
+      y:(w.bbox.y0+w.bbox.y1)/2, h:(w.bbox.y1-w.bbox.y0)
+    }));
+    if(!words.length) return [];
+    words.sort((a,b)=>a.y-b.y);
+    const medH=median(words.map(w=>w.h)), TH=medH*0.8;
+    const rows=[]; let cur=[], lastY=words[0].y;
+    for(const w of words){ if(Math.abs(w.y-lastY)>TH){ rows.push(cur); cur=[]; } cur.push(w); lastY=w.y; }
+    if(cur.length) rows.push(cur);
+    const R=rows.map(ws=>{ ws.sort((a,b)=>a.x0-b.x0); const text=ws.map(w=>w.t).join(' ').replace(/\s{2,}/g,' ').trim(); return {text,ws}; }).filter(r=>r.text);
+
+    const out=[];
+    for(let i=0;i<R.length;i++){
+      const r=R[i];
+      if(!/(Rp|RP)/.test(r.text)) continue;
+      let desc = pickUppercaseLeft(r);
+      if(desc.length<4){
+        const prev=R[i-1]?.text||'', next=R[i+1]?.text||'';
+        const pseg=topUppercase(prev), nseg=topUppercase(next);
+        if(pseg.length>desc.length) desc=pseg;
+        if(nseg.length>desc.length && !RE_DATE_ROW.test(next)) desc=nseg;
+      }
+      desc = cleanDesc(desc).trim();
+      if(!desc) continue;
+      const amount = extractAmount(r.text);
+      const date = findDateNearby(R, i) || '';
+      out.push({ date, desc, amount });
+    }
+    const uniq=[]; for(const r of out){ const key=`${r.date}|${r.desc}|${r.amount}`; if(!uniq.some(x=>`${x.date}|${x.desc}|${x.amount}`===key)) uniq.push(r); }
+    return uniq;
+  }
+
+  async function run(file){
+    if(!canvas.width) preview(file);
+    await new Promise(r=>setTimeout(r,80));
+    const worker = await Tesseract.createWorker('ind+eng', 1, { logger: m=>{ if(m.status==='recognizing text'){ prog.value=m.progress||0; stat.textContent=`OCR ${(m.progress*100|0)}%`; } }});
+    await worker.setParameters({ tessedit_pageseg_mode:'6', user_defined_dpi:'300', preserve_interword_spaces:'1' });
+    const blob = await new Promise(res=>canvas.toBlob(res,'image/png',1));
+    const { data } = await worker.recognize(blob);
+    await worker.terminate();
+    rawOut.textContent = data.text || '';
+    return extractRowsLivin(data);
+  }
+
+  return { preview, run };
+})();
+
+/* ====== ENGINE JENIUS (WARNA ASLI DIPERTAJAM; parsing sama spt sebelumnya) ====== */
+const ModeJenius = (function(){
+  const RE_DATE_ANY=/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+(\d{4})\b/i;
+  const RE_DATE_ROW=/^\s*\d{1,2}\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+\d{4}\s*$/i;
+  const RE_AMT_RP=/(\b|^)-?\s*Rp\s*-?\s*\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})?/i;
+  const RE_NOISE=/^\s*(?:\d{2,}|0:0|00|\[\d+\])\s*$/;
+
+  function median(a){ const b=[...a].sort((x,y)=>x-y); const i=Math.floor(b.length/2); return b.length%2?b[i]:(b[i-1]+b[i])/2; }
+  function normDate(s){
+    const map={jan:1,feb:2,mar:3,apr:4,mei:5,jun:6,jul:7,agu:8,sep:9,okt:10,nov:11,des:12};
+    const [d,mon,y]=s.trim().split(/\s+/); const mo=String(map[mon.slice(0,3).toLowerCase()]||1).padStart(2,'0');
+    return `${y}-${mo}-${String(d).padStart(2,'0')}`;
+  }
+  function extractAmountDisplay(s){
+    const m=s.match(/-?\s*Rp\s*-?\s*(\d{1,3}(?:[.\s]\d{3})+|\d+)(?:,(\d{2}))?/i);
+    if(!m) return '';
+    let num=(m[1]||'').replace(/[.\s\-]/g,''); if(m[2]) num+='.'+m[2];
+    const n=Math.abs(parseFloat(num)); if(isNaN(n)) return '';
+    return 'Rp '+n.toLocaleString('id-ID',{maximumFractionDigits:2});
+  }
+  function cleanDesc(s){
+    if(!s) return s;
+    return s.replace(RE_DATE_ANY,' ')
+      .replace(/^\s*(?:[@*•◦▪·–—\-_|]+|\d+\)|TJ|TI|SS)\s*/i,'')
+      .replace(/\s*-\s*$/,'')
+      .replace(/\.{2,}$/,'').replace(/\.{2,}/g,' ')
+      .replace/[|<>`"]/g,'')
+      .replace(/\s{2,}/g,' ')
+      .trim();
+  }
+  function buildDescFromFollowing(R, start){
+    const parts=[];
+    for(let j=start+1;j<=start+3 && j<R.length;j++){
+      const s=R[j].text;
+      if(RE_DATE_ROW.test(s) || RE_AMT_RP.test(s)) break;
+      if(RE_NOISE.test(s)) continue;
+      const lowers=(s.match(/[a-z]/g)||[]).length, uppers=(s.match(/[A-Z]/g)||[]).length;
+      if (lowers>=uppers) parts.push(s);
+    }
+    let s = cleanDesc(parts.join(' ').trim());
+    const m = s.match(/^(.*?\bdi\s*ATM)\b/i); if (m) s=m[1];
+    return s || '';
+  }
+  function findDateAroundRaw(R, idx){
+    for(let k=0;k<3;k++){ const s=R[idx+k]?.text||''; const m=s.match(RE_DATE_ANY); if(m) return `${m[1]} ${m[2]} ${m[3]}`; }
+    for(let k=1;k<=2;k++){ const s=R[idx-k]?.text||''; const m=s.match(RE_DATE_ANY); if(m) return `${m[1]} ${m[2]} ${m[3]}`; }
+    return '';
+  }
+
+  /* === PREVIEW JENIUS TANPA BW: warna asli + dipertajam (kontras & saturasi) === */
+  function preview(file){
+    const img=new Image();
+    img.onload=()=>{
+      const scale=2, w=Math.round(img.naturalWidth*scale), h=Math.round(img.naturalHeight*scale);
+      canvas.width=w; canvas.height=h; ctx.drawImage(img,0,0,w,h);
+
+      const id=ctx.getImageData(0,0,w,h), d=id.data;
+      const contrast=1.18;    // kontras ringan
+      const sat=1.25;         // saturasi ringan
+      const gamma=1.00;       // jaga gamma (bisa 0.98–1.05)
+      for(let i=0;i<d.length;i+=4){
+        let r=d[i], g=d[i+1], b=d[i+2];
+        r = (r-128)*contrast + 128;
+        g = (g-128)*contrast + 128;
+        b = (b-128)*contrast + 128;
+        const L = 0.299*r + 0.587*g + 0.114*b;
+        r = L + (r - L) * sat;
+        g = L + (g - L) * sat;
+        b = L + (b - L) * sat;
+        r = 255*Math.pow(Math.min(255,Math.max(0,r))/255, 1/gamma);
+        g = 255*Math.pow(Math.min(255,Math.max(0,g))/255, 1/gamma);
+        b = 255*Math.pow(Math.min(255,Math.max(0,b))/255, 1/gamma);
+        d[i]=r; d[i+1]=g; d[i+2]=b;
+      }
+      ctx.putImageData(id,0,0);
+    };
+    img.src=URL.createObjectURL(file);
+  }
+
+  function extractRowsJenius(data){
+    const words=(data.words||[]).filter(w=>(w.text||'').trim()).map(w=>({
+      t:w.text.trim(), x0:w.bbox.x0, x1:w.bbox.x1, y0:w.bbox.y0, y1:w.bbox.y1,
+      y:(w.bbox.y0+w.bbox.y1)/2, h:(w.bbox.y1-w.bbox.y0)
+    }));
+    if(!words.length) return [];
+    words.sort((a,b)=>a.y-b.y);
+    const medH=median(words.map(w=>w.h)), TH=medH*0.8;
+
+    const rows=[]; let cur=[], lastY=words[0].y;
+    for(const w of words){ if(Math.abs(w.y-lastY)>TH){ rows.push(cur); cur=[]; } cur.push(w); lastY=w.y; }
+    if(cur.length) rows.push(cur);
+
+    const R=rows.map(ws=>{ ws.sort((a,b)=>a.x0-b.x0); const text=ws.map(w=>w.t).join(' ').replace(/\s{2,}/g,' ').trim(); return {text, ws}; }).filter(r=>r.text);
+
+    const out=[]; let currentHeaderRaw='';
+    for(let i=0;i<R.length;i++){
+      const t=R[i].text;
+      if(RE_DATE_ROW.test(t)){ const m=t.match(RE_DATE_ANY); currentHeaderRaw = m?`${m[1]} ${m[2]} ${m[3]}`:''; continue; }
+      let amtIdx = RE_AMT_RP.test(t) ? i : -1;
+      if (amtIdx<0 && R[i+1] && RE_AMT_RP.test(R[i+1].text)) amtIdx = i+1;
+      if (amtIdx<0) continue;
+      const amount = extractAmountDisplay(R[amtIdx].text);
+      if(!amount) continue;
+      const titleIdx = (amtIdx-1>=0 && !RE_DATE_ROW.test(R[amtIdx-1].text)) ? (amtIdx-1) : amtIdx;
+      const desc = (buildDescFromFollowing(R, amtIdx) || R[titleIdx].text || '').toLowerCase();
+      const headerOrNear = currentHeaderRaw || findDateAroundRaw(R, amtIdx) || '';
+      const date = headerOrNear ? normDate(headerOrNear) : '';
+      out.push({ date, desc, amount });
+      if (amtIdx>i) i = amtIdx;
+    }
+    const uniq=[]; for(const r of out){ const k=`${r.date}|${r.desc}|${r.amount}`; if(!uniq.some(x=>`${x.date}|${x.desc}|${x.amount}`===k)) uniq.push(r); }
+    return uniq;
+  }
+
+  async function run(file){
+    if(!canvas.width) preview(file);
+    await new Promise(r=>setTimeout(r,60));
+    const worker=await Tesseract.createWorker('ind+eng',1,{logger:m=>{ if(m.status==='recognizing text'){ prog.value=m.progress||0; stat.textContent=`OCR ${(m.progress*100|0)}%`; } }});
+    await worker.setParameters({tessedit_pageseg_mode:'6',user_defined_dpi:'300',preserve_interword_spaces:'1'});
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png',1));
+    const {data}=await worker.recognize(blob);
+    await worker.terminate();
+    rawOut.textContent=data.text||'';
+    return extractRowsJenius(data);
+  }
+
+  return { preview, run };
+})();
+
+/* ====== MODE SWITCH (DIBALIK): livin→ModeJenius, jenius→ModeLivin ====== */
+active = ModeJenius; // default dibalik
+
+modeSel.addEventListener('change', ()=>{
+  active = (modeSel.value === 'livin') ? ModeJenius : ModeLivin;
+  if(currentFile){ active.preview(currentFile); }
+  stat.textContent = `Mode: ${modeSel.value.toUpperCase()}. Siap OCR.`;
+});
+
+// inisialisasi status awal UI
+(function initDefault(){
+  modeSel.value = 'livin';
+  active = ModeJenius;
+})();
+</script>
+</body>
+</html>
