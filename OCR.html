@@ -323,17 +323,31 @@ const ModeLivin = (function(){
     return uniq;
   }
 
-  async function run(file){
-    if(!canvas.width) preview(file);
-    await new Promise(r=>setTimeout(r,80));
-    const worker = await Tesseract.createWorker('ind+eng', 1, { logger: m=>{ if(m.status==='recognizing text'){ prog.value=m.progress||0; stat.textContent=`OCR ${(m.progress*100|0)}%`; } }});
-    await worker.setParameters({ tessedit_pageseg_mode:'6', user_defined_dpi:'300', preserve_interword_spaces:'1' });
-    const blob = await new Promise(res=>canvas.toBlob(res,'image/png',1));
-    const { data } = await worker.recognize(blob);
-    await worker.terminate();
-    rawOut.textContent = data.text || '';
-    return extractRowsLivin(data);
-  }
+async function run(file){
+  if(!canvas.width) preview(file);
+  // jeda kecil agar canvas ter-render
+  await new Promise(r=>setTimeout(r,60));
+
+  const worker = await Tesseract.createWorker({ 
+    logger: m => {
+      if(m.status === 'recognizing text'){
+        prog.value = m.progress || 0;
+        stat.textContent = `OCR ${(m.progress*100|0)}%`;
+      }
+    }
+  });
+
+  await worker.load();
+  await worker.loadLanguage('ind+eng');
+  await worker.initialize('ind+eng');
+  // kamu bisa langsung kirim canvas; tidak perlu toBlob()
+  const { data } = await worker.recognize(canvas);
+  await worker.terminate();
+
+  rawOut.textContent = data.text || '';
+  return extractRowsLivin(data);
+}
+
 
   return { preview, run };
 })();
@@ -452,17 +466,29 @@ const ModeJenius = (function(){
     return uniq;
   }
 
-  async function run(file){
-    if(!canvas.width) preview(file);
-    await new Promise(r=>setTimeout(r,60));
-    const worker=await Tesseract.createWorker('ind+eng',1,{logger:m=>{ if(m.status==='recognizing text'){ prog.value=m.progress||0; stat.textContent=`OCR ${(m.progress*100|0)}%`; } }});
-    await worker.setParameters({tessedit_pageseg_mode:'6',user_defined_dpi:'300',preserve_interword_spaces:'1'});
-    const blob=await new Promise(res=>canvas.toBlob(res,'image/png',1));
-    const {data}=await worker.recognize(blob);
-    await worker.terminate();
-    rawOut.textContent=data.text||'';
-    return extractRowsJenius(data);
-  }
+async function run(file){
+  if(!canvas.width) preview(file);
+  await new Promise(r=>setTimeout(r,60));
+
+  const worker = await Tesseract.createWorker({
+    logger: m => {
+      if(m.status === 'recognizing text'){
+        prog.value = m.progress || 0;
+        stat.textContent = `OCR ${(m.progress*100|0)}%`;
+      }
+    }
+  });
+
+  await worker.load();
+  await worker.loadLanguage('ind+eng');
+  await worker.initialize('ind+eng');
+  const { data } = await worker.recognize(canvas);
+  await worker.terminate();
+
+  rawOut.textContent = data.text || '';
+  return extractRowsJenius(data);
+}
+
 
   return { preview, run };
 })();
@@ -484,3 +510,4 @@ modeSel.addEventListener('change', ()=>{
 </script>
 </body>
 </html>
+
