@@ -185,17 +185,33 @@ copyCsvBtn.addEventListener('click', ()=>doCopy('csv'));
 copyJsonBtn.addEventListener('click', ()=>doCopy('json'));
 clearBtn.addEventListener('click', ()=>{ rowsOut=[]; renderTable(); rawOut.textContent=''; canvas.width=10; canvas.height=10; prog.value=0; stat.textContent='Dibersihkan.'; ocrBtn.disabled=true; });
 
-pickBtn.addEventListener('click', async ()=>{
-  try{
-    if(!window.showOpenFilePicker){
-      alert('Browser ini tidak mendukung File Picker modern. Coba Chrome/Edge terbaru.');
-      return;
+pickBtn.addEventListener('click', () => {
+  // buat input file sementara
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.style.display = 'none';
+  document.body.appendChild(inp);
+
+  // saat user memilih file
+  inp.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      currentFile = file;
+      active.preview(currentFile);
+      ocrBtn.disabled = false;
+      stat.textContent = 'Siap OCR';
+    } else {
+      stat.textContent = 'Tidak ada file yang dipilih.';
     }
-    const [h] = await window.showOpenFilePicker({multiple:false, types:[{description:'Gambar', accept:{'image/*':['.png','.jpg','.jpeg','.webp']}}]});
-    currentFile = await h.getFile();
-    if(currentFile){ active.preview(currentFile); ocrBtn.disabled=false; stat.textContent='Siap OCR'; }
-  }catch(e){}
+    // bersihkan input sementara
+    inp.remove();
+  }, { once: true });
+
+  // buka picker
+  inp.click();
 });
+
 
 ocrBtn.addEventListener('click', async ()=>{
   if(!currentFile) return;
