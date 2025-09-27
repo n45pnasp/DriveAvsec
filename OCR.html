@@ -107,6 +107,9 @@
   <textarea id="dlgText"></textarea>
 </dialog>
 
+<!-- Input file permanen (fallback universal) -->
+<input id="fileInput" type="file" accept="image/*" style="position:fixed; left:-9999px; top:-9999px;" />
+
 <!-- Tesseract -->
 <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
@@ -120,6 +123,7 @@ const prog = $('#prog'), stat = $('#stat'), rawOut = $('#raw');
 const tbody = $('#tbody'), masterCheck = $('#masterCheck');
 const selAllBtn = $('#selAll'), copyCsvBtn = $('#copyCsv'), copyJsonBtn = $('#copyJson');
 const copyDlg = $('#copyDlg'), dlgText = $('#dlgText'), dlgClose = $('#dlgClose');
+const fileInput = document.getElementById('fileInput');
 
 let currentFile = null;
 let rowsOut = [];
@@ -185,47 +189,23 @@ copyCsvBtn.addEventListener('click', ()=>doCopy('csv'));
 copyJsonBtn.addEventListener('click', ()=>doCopy('json'));
 clearBtn.addEventListener('click', ()=>{ rowsOut=[]; renderTable(); rawOut.textContent=''; canvas.width=10; canvas.height=10; prog.value=0; stat.textContent='Dibersihkan.'; ocrBtn.disabled=true; });
 
-pickBtn.addEventListener('click', () => {
-  // buat input file sementara
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = 'image/*';
-  inp.style.display = 'none';
-  document.body.appendChild(inp);
-
-  // saat user memilih file
-  inp.addEventListener('change', async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      currentFile = file;
-      active.preview(currentFile);
-      ocrBtn.disabled = false;
-      stat.textContent = 'Siap OCR';
-    } else {
-      stat.textContent = 'Tidak ada file yang dipilih.';
-    }
-    // bersihkan input sementara
-    inp.remove();
-  }, { once: true });
-
-  // buka picker
-  inp.click();
+/* === Handler pilih file: universal & stabil === */
+async function handleSelectedFile(file){
+  if(!file){ stat.textContent = 'Tidak ada file yang dipilih.'; return; }
+  currentFile = file;
+  active.preview(currentFile);
+  // jeda kecil untuk memastikan canvas ter-render
+  await new Promise(r=>setTimeout(r,30));
+  ocrBtn.disabled = false;
+  stat.textContent = 'Siap OCR';
+}
+pickBtn.addEventListener('click', ()=>{
+  fileInput.value = ''; // biar bisa pilih file yang sama berulang
+  fileInput.click();
 });
-
-
-ocrBtn.addEventListener('click', async ()=>{
-  if(!currentFile) return;
-  ocrBtn.disabled = true; prog.value = 0.01; stat.textContent='Menjalankan OCR…';
-  try{
-    rowsOut = await active.run(currentFile);
-    renderTable();
-    stat.textContent = `Selesai. ${rowsOut.length} baris.`;
-  }catch(e){
-    console.error(e);
-    stat.textContent = 'Terjadi kesalahan OCR.';
-  }finally{
-    ocrBtn.disabled = false;
-  }
+fileInput.addEventListener('change', async (e)=>{
+  const file = e.target.files && e.target.files[0];
+  await handleSelectedFile(file);
 });
 
 /* ====== ENGINE LIVIN (BW kontras; parsing uppercase di kiri Rp; tanggal di sekitar baris) ====== */
@@ -384,7 +364,7 @@ const ModeJenius = (function(){
       .replace(/^\s*(?:[@*•◦▪·–—\-_|]+|\d+\)|TJ|TI|SS)\s*/i,'')
       .replace(/\s*-\s*$/,'')
       .replace(/\.{2,}$/,'').replace(/\.{2,}/g,' ')
-      .replace/[|<>`"]/g,'')
+      .replace(/[|<>`"]/g,'')   /* ← FIX: sebelumnya salah tulis */
       .replace(/\s{2,}/g,' ')
       .trim();
   }
@@ -417,7 +397,7 @@ const ModeJenius = (function(){
       const id=ctx.getImageData(0,0,w,h), d=id.data;
       const contrast=1.18;    // kontras ringan
       const sat=1.25;         // saturasi ringan
-      const gamma=1.00;       // jaga gamma (bisa 0.98–1.05)
+      const gamma=1.00;       // jaga gamma (opsional)
       for(let i=0;i<d.length;i+=4){
         let r=d[i], g=d[i+1], b=d[i+2];
         r = (r-128)*contrast + 128;
